@@ -39,3 +39,4 @@ rules:
         - "tests/**"
         - "*.test.ts"
         - "scripts/**"
+        - "src/cli/**"
