@@ -20,6 +20,7 @@
   },
   "author": "Tobias Lekman",
   "license": "MIT",
+  "packageManager": "bun@1.3.7",
   "scripts": {
     "start": "bun run src/cli/index.ts",
     "lint": "biome check src/ tests/",
