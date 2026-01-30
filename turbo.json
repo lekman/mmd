@@ -17,6 +17,11 @@
       "inputs": ["src/**", "tests/unit/**", "bunfig.toml"],
       "outputs": ["coverage/**"],
       "outputLogs": "new-only"
+    },
+    "build": {
+      "inputs": ["src/**", "package.json", "tsconfig.json"],
+      "outputs": ["dist/**"],
+      "outputLogs": "new-only"
     }
   }
 }

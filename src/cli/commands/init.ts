@@ -47,7 +47,14 @@ export const initCommand = new Command("init")
       }
     }
 
-    const packageRoot = resolve(dirname(new URL(import.meta.url).pathname), "../../..");
+    // Walk up from the script location to find the package root (where package.json lives).
+    // Works both in source (src/cli/commands/) and bundle (dist/).
+    let packageRoot = dirname(new URL(import.meta.url).pathname);
+    while (!existsSync(resolve(packageRoot, "package.json"))) {
+      const parent = dirname(packageRoot);
+      if (parent === packageRoot) break;
+      packageRoot = parent;
+    }
 
     for (const tool of tools) {
       const destPath = getInstallPaths(tool, flags.global);
