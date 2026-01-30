@@ -24,6 +24,9 @@ includes:
     aliases:
       - s
     dir: .
+  op:
+    taskfile: ./node_modules/@northbridge-security/ai-toolkit/tasks/onepassword.yml
+    dir: .
 
 vars:
   PROJECT_NAME: "mmd"
@@ -91,6 +94,169 @@ tasks:
         echo ""
         echo -e "${GREEN}✓${NC} All tools installed successfully"
 
+  setup:repo:
+    desc: "Configure GitHub repository secrets for CI/CD"
+    aliases: [setup]
+    silent: true
+    cmds:
+      - |
+        set -euo pipefail
+
+        GREEN='\033[0;32m'
+        YELLOW='\033[0;33m'
+        CYAN='\033[0;36m'
+        RED='\033[0;31m'
+        BOLD='\033[1m'
+        NC='\033[0m'
+
+        echo -e "${CYAN}GitHub Repository Secret Configuration${NC}"
+        echo "---"
+
+        # Required secrets for CI/CD
+        SECRETS=(
+          "CODECOV_TOKEN"
+          "NPM_TOKEN"
+          "RELEASE_BOT_APP_ID"
+          "RELEASE_BOT_PRIVATE_KEY"
+          "CLAUDE_CODE_OAUTH_TOKEN"
+        )
+
+        # Check gh CLI
+        if ! command -v gh &>/dev/null; then
+          echo -e "${RED}Error:${NC} GitHub CLI (gh) is not installed"
+          echo "Install from: https://cli.github.com"
+          exit 1
+        fi
+
+        # Check gh authentication — login interactively if needed
+        if ! gh auth status &>/dev/null 2>&1; then
+          echo -e "${YELLOW}Not logged in to GitHub. Launching login...${NC}"
+          gh auth login -p ssh --skip-ssh-key
+        fi
+
+        # Ensure gh uses SSH protocol
+        CURRENT_PROTO=$(gh config get git_protocol 2>/dev/null || echo "")
+        if [ "$CURRENT_PROTO" != "ssh" ]; then
+          gh config set git_protocol ssh
+          echo -e "${GREEN}✓${NC} Set gh git_protocol to ssh"
+        fi
+
+        # Try to resolve secrets from 1Password via .env
+        OP_AVAILABLE=false
+        if command -v op &>/dev/null; then
+          echo -e "${GREEN}1Password CLI detected${NC}"
+          # Source resolved env vars if op:export task exists
+          EXPORT_FILE=$(task op:export 2>/dev/null) && {
+            if [ -f "$EXPORT_FILE" ]; then
+              source "$EXPORT_FILE"
+              OP_AVAILABLE=true
+              echo -e "${GREEN}Secrets resolved from 1Password${NC}"
+            fi
+          } || {
+            echo -e "${YELLOW}Could not resolve secrets from 1Password (task op:export failed)${NC}"
+          }
+        else
+          echo -e "${YELLOW}1Password CLI not found — will prompt for values${NC}"
+        fi
+
+        # Prevent sourced tokens from overriding gh CLI auth
+        unset GITHUB_TOKEN GH_TOKEN
+
+        echo ""
+
+        # Detect repo from git remote
+        REPO=$(gh repo view --json nameWithOwner --jq '.nameWithOwner' 2>/dev/null)
+        if [ -z "$REPO" ]; then
+          echo -e "${RED}Error:${NC} Could not detect GitHub repository"
+          echo "Run from inside a git repo with a GitHub remote"
+          exit 1
+        fi
+        echo -e "Repository: ${GREEN}${REPO}${NC}"
+        echo ""
+
+        # Get existing secrets
+        EXISTING=$(gh secret list --repo "$REPO" --json name --jq '.[].name' 2>/dev/null || echo "")
+
+        CONFIGURED=0
+        SKIPPED=0
+        FAILED=0
+
+        for SECRET in "${SECRETS[@]}"; do
+          # Check if secret already exists
+          if echo "$EXISTING" | grep -q "^${SECRET}$"; then
+            echo -e "  ${GREEN}✓${NC} ${SECRET} (already configured)"
+            SKIPPED=$((SKIPPED + 1))
+            continue
+          fi
+
+          # Try to get value from resolved env
+          VALUE="${!SECRET:-}"
+
+          if [ -n "$VALUE" ] && [ "$VALUE" != "op://"* ]; then
+            # Have a resolved value — set it
+            if gh secret set "$SECRET" --repo "$REPO" --body "$VALUE"; then
+              echo -e "  ${GREEN}✓${NC} ${SECRET} (set from 1Password)"
+              CONFIGURED=$((CONFIGURED + 1))
+            else
+              echo -e "  ${RED}✗${NC} ${SECRET} (failed to set)"
+              FAILED=$((FAILED + 1))
+            fi
+          else
+            # Prompt for value interactively
+            echo -e "  ${YELLOW}?${NC} ${SECRET} — no resolved value available"
+
+            if [ "$SECRET" = "RELEASE_BOT_PRIVATE_KEY" ]; then
+              echo -e "    ${CYAN}Paste PEM private key (end with empty line):${NC}"
+              PEM_VALUE=""
+              while IFS= read -r line; do
+                [ -z "$line" ] && break
+                PEM_VALUE="${PEM_VALUE}${line}"$'\n'
+              done
+
+              if [ -n "$PEM_VALUE" ]; then
+                if echo "$PEM_VALUE" | gh secret set "$SECRET" --repo "$REPO"; then
+                  echo -e "    ${GREEN}✓${NC} ${SECRET} (set from input)"
+                  CONFIGURED=$((CONFIGURED + 1))
+                else
+                  echo -e "    ${RED}✗${NC} ${SECRET} (failed to set)"
+                  FAILED=$((FAILED + 1))
+                fi
+              else
+                echo -e "    ${YELLOW}⊘${NC} ${SECRET} (skipped)"
+                FAILED=$((FAILED + 1))
+              fi
+            else
+              read -rp "    Enter value (or press Enter to skip): " INPUT_VALUE
+              if [ -n "$INPUT_VALUE" ]; then
+                if gh secret set "$SECRET" --repo "$REPO" --body "$INPUT_VALUE"; then
+                  echo -e "    ${GREEN}✓${NC} ${SECRET} (set from input)"
+                  CONFIGURED=$((CONFIGURED + 1))
+                else
+                  echo -e "    ${RED}✗${NC} ${SECRET} (failed to set)"
+                  FAILED=$((FAILED + 1))
+                fi
+              else
+                echo -e "    ${YELLOW}⊘${NC} ${SECRET} (skipped)"
+                FAILED=$((FAILED + 1))
+              fi
+            fi
+          fi
+        done
+
+        echo ""
+        echo -e "${BOLD}Summary:${NC}"
+        echo -e "  Configured: ${GREEN}${CONFIGURED}${NC}"
+        echo -e "  Existing:   ${YELLOW}${SKIPPED}${NC}"
+        echo -e "  Remaining:  ${RED}${FAILED}${NC}"
+
+        if [ "$FAILED" -gt 0 ]; then
+          echo ""
+          echo -e "${YELLOW}Re-run 'task setup:repo' after resolving remaining secrets${NC}"
+        else
+          echo ""
+          echo -e "${GREEN}✓${NC} All repository secrets configured"
+        fi
+
   default:
     desc: "Show available mmd tasks"
     aliases: [help, h]
@@ -110,6 +276,7 @@ tasks:
         echo "────────────────────────────────────────────────────────────────────────────────"
         echo -e "${BOLD}Setup:${NC}"
         echo -e "  ${GREEN}task install${NC}                     ${YELLOW}i${NC}         Install/upgrade required tools"
+        echo -e "  ${GREEN}task setup:repo${NC}                  ${YELLOW}setup${NC}     Configure GitHub repo secrets"
         echo ""
         echo -e "${BOLD}Development:${NC}"
         echo -e "  ${GREEN}task lint${NC}                        ${YELLOW}l${NC}         Run linting checks"
@@ -129,6 +296,7 @@ tasks:
         echo -e "  ${GREEN}task yaml:<command>${NC}              ${YELLOW}yml${NC}       YAML linting & validation"
         echo -e "  ${GREEN}task markdown:<command>${NC}          ${YELLOW}md${NC}        Markdown linting & validation"
         echo -e "  ${GREEN}task security:<command>${NC}          ${YELLOW}s${NC}         Security scanning tools"
+        echo -e "  ${GREEN}task op:<command>${NC}                          1Password secret resolution"
         echo ""
         echo -e "${BLUE}Run 'task --list' to see all available tasks${NC}"
 
@@ -230,4 +398,4 @@ tasks:
 
         echo -e "${GREEN}Building CLI...${NC}"
         bun run build
-        echo -e "${GREEN}✓${NC} dist/cli.js built"
+        echo -e "${GREEN}✓${NC} dist/index.js built"
