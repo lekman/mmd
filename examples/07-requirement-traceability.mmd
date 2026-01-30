@@ -1,0 +1,50 @@
+%% Requirement diagram: Traceability from business need to implementation
+%% Shows how requirements relate through derives, satisfies, and verifies
+%% Useful for audits and compliance tracking
+
+requirementDiagram
+
+    requirement businessNeed {
+        id: BR-001
+        text: Users must be able to reset their password securely
+        risk: high
+        verifymethod: inspection
+    }
+
+    functionalRequirement resetFlow {
+        id: FR-001
+        text: System sends a time-limited reset link via email
+        risk: medium
+        verifymethod: demonstration
+    }
+
+    functionalRequirement tokenExpiry {
+        id: FR-002
+        text: Reset tokens expire after 15 minutes
+        risk: medium
+        verifymethod: test
+    }
+
+    performanceRequirement emailDelivery {
+        id: NFR-001
+        text: Reset email delivered within 30 seconds
+        risk: low
+        verifymethod: test
+    }
+
+    designConstraint hashAlgorithm {
+        id: DC-001
+        text: Passwords hashed with bcrypt cost factor 12
+        risk: medium
+        verifymethod: inspection
+    }
+
+    %% FR-001 and FR-002 derive from the business requirement
+    resetFlow - derives -> businessNeed
+    tokenExpiry - derives -> businessNeed
+
+    %% The hash algorithm design constraint satisfies the security need
+    hashAlgorithm - satisfies -> businessNeed
+
+    %% NFR-001 refines the functional reset flow
+    emailDelivery - refines -> resetFlow

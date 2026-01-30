@@ -1,0 +1,23 @@
+%% C4 Context diagram: System-level view showing external actors and systems
+%% This is the highest zoom level in the C4 model
+%% Shows who uses the system and what external systems it depends on
+
+C4Context
+    title Internet Banking System - Context
+
+    %% People who interact with the system
+    Person(customer, "Banking Customer", "Views account balances and makes payments")
+    Person(support, "Support Staff", "Handles customer queries")
+
+    %% The system under design
+    System(bankingSystem, "Internet Banking System", "Allows customers to manage accounts online")
+
+    %% External systems the banking system depends on
+    System_Ext(emailSystem, "Email System", "Sends transactional emails")
+    System_Ext(coreBank, "Core Banking System", "Stores account and transaction data")
+
+    %% Relationships between actors and systems
+    Rel(customer, bankingSystem, "Uses", "HTTPS")
+    Rel(support, bankingSystem, "Administers", "HTTPS")
+    Rel(bankingSystem, emailSystem, "Sends emails via", "SMTP")
+    Rel(bankingSystem, coreBank, "Reads/writes accounts", "REST API")

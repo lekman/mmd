@@ -1,0 +1,26 @@
+%% Flowchart: CI/CD pipeline with decision gates
+%% LR orientation reads naturally left-to-right for pipelines
+%% Diamond nodes are decision points, stadium shapes are start/end
+
+flowchart LR
+    A([Push to main]) --> B[Install deps]
+    B --> C[Lint & Format]
+    C --> D[Run unit tests]
+    D --> E{Tests pass?}
+
+    %% Decision gate splits into success and failure paths
+    E -->|Yes| F[Build artifacts]
+    E -->|No| G([Notify & fail])
+
+    F --> H[Deploy to staging]
+    H --> I{Smoke tests OK?}
+
+    I -->|Yes| J[Deploy to production]
+    I -->|No| K[Rollback staging]
+    K --> G
+
+    J --> L([Done])
+
+    %% Styling to distinguish decision nodes and outcomes
+    style G fill:#f44,color:#fff
+    style L fill:#4a4,color:#fff

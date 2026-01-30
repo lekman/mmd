@@ -1,0 +1,35 @@
+%% Git graph: Trunk-based development with short-lived feature branches
+%% Main branch is the trunk; features branch off and merge back quickly
+%% Tags mark releases cut from main
+
+gitGraph
+    commit id: "init"
+    commit id: "setup CI"
+
+    %% Feature branch for auth - short-lived, merges back quickly
+    branch feature/auth
+    checkout feature/auth
+    commit id: "add login endpoint"
+    commit id: "add JWT middleware"
+    checkout main
+    merge feature/auth id: "merge auth"
+
+    commit id: "update deps"
+
+    %% Another short-lived feature branch
+    branch feature/dashboard
+    checkout feature/dashboard
+    commit id: "add dashboard UI"
+    commit id: "add charts"
+    checkout main
+    merge feature/dashboard id: "merge dashboard"
+
+    %% Tag a release from trunk
+    commit id: "bump version" tag: "v1.0.0"
+
+    %% Hotfix branches also merge directly to main
+    branch hotfix/login-fix
+    checkout hotfix/login-fix
+    commit id: "fix token refresh"
+    checkout main
+    merge hotfix/login-fix id: "merge hotfix" tag: "v1.0.1"

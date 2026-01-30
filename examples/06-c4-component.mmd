@@ -1,0 +1,27 @@
+%% C4 Component diagram: Zooms into the API Gateway container
+%% Shows the internal components (modules/classes) of a single container
+%% This is the lowest zoom level before code
+
+C4Component
+    title API Gateway - Components
+
+    %% External actors reaching this container
+    Container(spa, "Single-Page App", "React", "Browser UI")
+    Container(accounts, "Accounts Service", "Go", "Account logic")
+
+    %% Component boundary for the API Gateway container
+    Container_Boundary(api, "API Gateway") {
+        Component(router, "Router", "Express Router", "Maps HTTP routes to handlers")
+        Component(authMiddleware, "Auth Middleware", "Passport.js", "Validates JWT tokens")
+        Component(rateLimiter, "Rate Limiter", "express-rate-limit", "Throttles requests per client")
+        Component(accountCtrl, "Account Controller", "TypeScript", "Handles account endpoints")
+        Component(healthCtrl, "Health Controller", "TypeScript", "Exposes readiness and liveness probes")
+    }
+
+    %% Request flow through the gateway
+    Rel(spa, router, "HTTP requests", "HTTPS")
+    Rel(router, rateLimiter, "Passes through")
+    Rel(rateLimiter, authMiddleware, "Passes through")
+    Rel(authMiddleware, accountCtrl, "Authenticated requests")
+    Rel(router, healthCtrl, "Unauthenticated")
+    Rel(accountCtrl, accounts, "Forwards to", "gRPC")
