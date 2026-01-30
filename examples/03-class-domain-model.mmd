@@ -1,0 +1,52 @@
+%% Class diagram: E-commerce domain model
+%% Uses <<interface>> stereotype for contracts
+%% Relationship types: inheritance (--|>), composition (*--), association (-->)
+
+classDiagram
+    class Purchasable {
+        <<interface>>
+        +getPrice() Money
+        +isAvailable() bool
+    }
+
+    class Product {
+        +String id
+        +String name
+        +Money price
+        +int stockCount
+        +getPrice() Money
+        +isAvailable() bool
+    }
+
+    class Order {
+        +String id
+        +DateTime createdAt
+        +OrderStatus status
+        +addItem(Product, int) void
+        +getTotal() Money
+    }
+
+    class OrderItem {
+        +int quantity
+        +Money unitPrice
+        +getSubtotal() Money
+    }
+
+    class Customer {
+        +String id
+        +String email
+        +String name
+        +placeOrder(Order) void
+    }
+
+    %% Product implements the Purchasable interface
+    Purchasable <|.. Product
+
+    %% An Order is composed of OrderItems (strong ownership)
+    Order *-- OrderItem
+
+    %% OrderItem references a Product
+    OrderItem --> Product
+
+    %% Customer places Orders (one-to-many association)
+    Customer "1" --> "*" Order : places

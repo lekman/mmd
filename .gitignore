@@ -1,0 +1,44 @@
+# Dependencies
+node_modules/
+
+# Build outputs
+dist/
+build/
+*.tsbuildinfo
+
+# Turbo cache
+.turbo/
+
+# Test and coverage
+coverage/
+*.lcov
+
+# Environment and secrets
+.env
+.env.*
+!.env.example
+
+# IDE
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+.logs/
+
+# Temporary files
+.tmp/
+.worktree/
+
+# Local development files
+*.local.*
+
+# Lock files (bun uses bun.lock)
+package-lock.json
+yarn.lock
+pnpm-lock.yaml

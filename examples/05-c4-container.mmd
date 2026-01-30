@@ -1,0 +1,27 @@
+%% C4 Container diagram: Zooms into the Internet Banking System
+%% Shows the major deployable units (containers) and their interactions
+%% Each container has a technology label for architecture decisions
+
+C4Container
+    title Internet Banking System - Containers
+
+    Person(customer, "Banking Customer", "Manages accounts online")
+
+    %% System boundary groups containers that belong to this system
+    System_Boundary(banking, "Internet Banking System") {
+        Container(spa, "Single-Page App", "React, TypeScript", "Provides banking UI in the browser")
+        Container(api, "API Gateway", "Node.js, Express", "Routes and authenticates API requests")
+        Container(accounts, "Accounts Service", "Go", "Manages account data and balances")
+        ContainerDb(db, "Database", "PostgreSQL", "Stores user and account data")
+        Container(queue, "Message Queue", "RabbitMQ", "Async event processing")
+    }
+
+    %% External system from the context diagram
+    System_Ext(coreBank, "Core Banking System", "Legacy mainframe")
+
+    Rel(customer, spa, "Uses", "HTTPS")
+    Rel(spa, api, "Calls", "JSON/HTTPS")
+    Rel(api, accounts, "Routes to", "gRPC")
+    Rel(accounts, db, "Reads/writes", "SQL")
+    Rel(accounts, queue, "Publishes events", "AMQP")
+    Rel(accounts, coreBank, "Syncs with", "SOAP/XML")

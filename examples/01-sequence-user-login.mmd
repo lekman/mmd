@@ -1,0 +1,34 @@
+%% Sequence diagram: User login flow with OAuth2
+%% Activation bars show when each participant is processing
+%% The alt block handles success vs failure branching
+
+sequenceDiagram
+    actor User
+    participant App as Web App
+    participant Auth as Auth Service
+    participant DB as User Database
+
+    User->>App: Enter credentials
+    activate App
+
+    App->>Auth: POST /auth/login
+    activate Auth
+
+    Auth->>DB: Query user record
+    activate DB
+    DB-->>Auth: User record
+    deactivate DB
+
+    %% Alt block shows conditional flow based on credential validity
+    alt Valid credentials
+        Auth->>Auth: Generate JWT token
+        Auth-->>App: 200 OK + JWT
+        deactivate Auth
+        App-->>User: Redirect to dashboard
+    else Invalid credentials
+        Auth-->>App: 401 Unauthorized
+        deactivate Auth
+        App-->>User: Show error message
+    end
+
+    deactivate App

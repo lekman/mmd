@@ -1,0 +1,30 @@
+%% Architecture diagram: Cloud deployment using service groups
+%% Uses architecture-beta for a spatial layout of cloud services
+%% Shows how traffic flows from users through infrastructure tiers
+
+architecture-beta
+    %% Group definitions for logical tiers
+    group internet(cloud)[Internet]
+    group ingress(cloud)[Ingress Tier]
+    group app(server)[Application Tier]
+    group data(disk)[Data Tier]
+
+    %% Services within each group
+    service users(internet)[Users] in internet
+    service cdn(server)[CDN] in ingress
+    service lb(server)[Load Balancer] in ingress
+    service web1(server)[Web Server 1] in app
+    service web2(server)[Web Server 2] in app
+    service api(server)[API Service] in app
+    service db(database)[PostgreSQL] in data
+    service cache(database)[Redis Cache] in data
+
+    %% Traffic flow from users to data
+    users:R --> L:cdn
+    cdn:R --> L:lb
+    lb:R --> L:web1
+    lb:R --> L:web2
+    web1:R --> L:api
+    web2:R --> L:api
+    api:R --> L:db
+    api:R --> L:cache
