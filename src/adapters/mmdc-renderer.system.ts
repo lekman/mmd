@@ -2,6 +2,35 @@ import type { IRenderer } from "../domain/interfaces.ts";
 import type { DiagramType } from "../domain/types.ts";
 
 /**
+ * Resolve the mmdc binary path. Checks:
+ * 1. Locally installed node_modules/.bin/mmdc
+ * 2. Global PATH lookup via `which`
+ *
+ * Returns the resolved path, or null if not found.
+ */
+function resolveMmdcBinary(): string | null {
+  // Check local node_modules
+  const localProc = Bun.spawnSync([
+    "node",
+    "-e",
+    "console.log(require.resolve('@mermaid-js/mermaid-cli/src/cli.js'))",
+  ]);
+  if (localProc.exitCode === 0) {
+    const resolved = localProc.stdout.toString().trim();
+    if (resolved) return resolved;
+  }
+
+  // Check PATH
+  const whichProc = Bun.spawnSync(["which", "mmdc"]);
+  if (whichProc.exitCode === 0) {
+    const resolved = whichProc.stdout.toString().trim();
+    if (resolved) return resolved;
+  }
+
+  return null;
+}
+
+/**
  * Fallback renderer using @mermaid-js/mermaid-cli (mmdc).
  * Supports all Mermaid diagram types via Puppeteer-based rendering.
  *
@@ -31,12 +60,20 @@ export class MmdcRenderer implements IRenderer {
     const { tmpdir } = await import("node:os");
     const { join } = await import("node:path");
 
+    const mmdcPath = resolveMmdcBinary();
+    if (!mmdcPath) {
+      throw new Error(
+        "mmdc is required for this diagram type but @mermaid-js/mermaid-cli is not installed.\n" +
+          "Install it with: bun add -g @mermaid-js/mermaid-cli"
+      );
+    }
+
     const inputPath = join(tmpdir(), `mmd-input-${Date.now()}.mmd`);
     const outputPath = join(tmpdir(), `mmd-output-${Date.now()}.svg`);
 
     try {
       writeFileSync(inputPath, content);
-      const proc = Bun.spawnSync(["npx", "mmdc", "-i", inputPath, "-o", outputPath, "-e", "svg"]);
+      const proc = Bun.spawnSync([mmdcPath, "-i", inputPath, "-o", outputPath, "-e", "svg"]);
       if (proc.exitCode !== 0) {
         const stderr = proc.stderr.toString();
         throw new Error(`mmdc failed (exit ${proc.exitCode}): ${stderr}`);
