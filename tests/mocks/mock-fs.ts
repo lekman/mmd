@@ -32,6 +32,10 @@ export class MockFileSystem implements IFileSystem {
     // no-op in memory
   }
 
+  async delete(path: string): Promise<void> {
+    this.files.delete(path);
+  }
+
   setFile(path: string, content: string, mtime?: number): void {
     this.files.set(path, { content, mtime: mtime ?? Date.now() });
   }

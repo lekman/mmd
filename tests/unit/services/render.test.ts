@@ -36,7 +36,7 @@ describe("prependThemeInit", () => {
 });
 
 describe("renderDiagrams", () => {
-  test("renders light and dark SVGs for each .mmd file", async () => {
+  test("renders single SVG per .mmd file using light mode by default", async () => {
     const fs = new MockFileSystem();
     fs.setFile("docs/mmd/test.mmd", "flowchart TD\n  A --> B");
 
@@ -50,23 +50,40 @@ describe("renderDiagrams", () => {
     });
 
     expect(results).toHaveLength(1);
-    expect(results[0]!.lightSvgPath).toBe("docs/mmd/test.light.svg");
-    expect(results[0]!.darkSvgPath).toBe("docs/mmd/test.dark.svg");
+    expect(results[0]!.svgPath).toBe("docs/mmd/test.svg");
 
-    // Both SVGs should have been written
-    expect(await fs.exists("docs/mmd/test.light.svg")).toBe(true);
-    expect(await fs.exists("docs/mmd/test.dark.svg")).toBe(true);
+    // Single SVG written
+    expect(await fs.exists("docs/mmd/test.svg")).toBe(true);
 
-    // Renderer should have been called twice (light + dark)
-    expect(renderer.renderCalls).toHaveLength(2);
+    // Renderer called once (not twice)
+    expect(renderer.renderCalls).toHaveLength(1);
+    expect(renderer.renderCalls[0]).toContain('"background":"#ffffff"');
   });
 
-  test("skips rendering when SVGs are newer than source (mtime check)", async () => {
+  test("renders with dark mode when config.mode is dark", async () => {
+    const darkConfig: ThemeConfig = { ...config, mode: "dark" };
+    const fs = new MockFileSystem();
+    fs.setFile("docs/mmd/test.mmd", "flowchart TD\n  A --> B");
+
+    const renderer = new MockRenderer(["flowchart"]);
+
+    const results = await renderDiagrams(darkConfig, {
+      renderer,
+      fallbackRenderer: renderer,
+      fs,
+      mmdFiles: ["docs/mmd/test.mmd"],
+    });
+
+    expect(results).toHaveLength(1);
+    expect(renderer.renderCalls).toHaveLength(1);
+    expect(renderer.renderCalls[0]).toContain('"background":"#0d1117"');
+  });
+
+  test("skips rendering when SVG is newer than source (mtime check)", async () => {
     const now = Date.now();
     const fs = new MockFileSystem();
     fs.setFile("docs/mmd/test.mmd", "flowchart TD\n  A --> B", now - 1000);
-    fs.setFile("docs/mmd/test.light.svg", "<svg>light</svg>", now);
-    fs.setFile("docs/mmd/test.dark.svg", "<svg>dark</svg>", now);
+    fs.setFile("docs/mmd/test.svg", "<svg>cached</svg>", now);
 
     const renderer = new MockRenderer(["flowchart"]);
 
@@ -81,12 +98,11 @@ describe("renderDiagrams", () => {
     expect(renderer.renderCalls).toHaveLength(0);
   });
 
-  test("re-renders when source is newer than SVGs", async () => {
+  test("re-renders when source is newer than SVG", async () => {
     const now = Date.now();
     const fs = new MockFileSystem();
     fs.setFile("docs/mmd/test.mmd", "flowchart TD\n  A --> B", now);
-    fs.setFile("docs/mmd/test.light.svg", "<svg>old</svg>", now - 1000);
-    fs.setFile("docs/mmd/test.dark.svg", "<svg>old</svg>", now - 1000);
+    fs.setFile("docs/mmd/test.svg", "<svg>old</svg>", now - 1000);
 
     const renderer = new MockRenderer(["flowchart"]);
 
@@ -98,15 +114,35 @@ describe("renderDiagrams", () => {
     });
 
     expect(results).toHaveLength(1);
-    expect(renderer.renderCalls).toHaveLength(2);
+    expect(renderer.renderCalls).toHaveLength(1);
+  });
+
+  test("re-renders when config is newer than SVG", async () => {
+    const now = Date.now();
+    const fs = new MockFileSystem();
+    fs.setFile("docs/mmd/test.mmd", "flowchart TD\n  A --> B", now - 2000);
+    fs.setFile("docs/mmd/test.svg", "<svg>old</svg>", now - 1000);
+    fs.setFile(".mermaid.json", "{}", now);
+
+    const renderer = new MockRenderer(["flowchart"]);
+
+    const results = await renderDiagrams(config, {
+      renderer,
+      fallbackRenderer: renderer,
+      fs,
+      mmdFiles: ["docs/mmd/test.mmd"],
+      configPath: ".mermaid.json",
+    });
+
+    expect(results).toHaveLength(1);
+    expect(renderer.renderCalls).toHaveLength(1);
   });
 
   test("forces re-render with force flag", async () => {
     const now = Date.now();
     const fs = new MockFileSystem();
     fs.setFile("docs/mmd/test.mmd", "flowchart TD\n  A --> B", now - 1000);
-    fs.setFile("docs/mmd/test.light.svg", "<svg>light</svg>", now);
-    fs.setFile("docs/mmd/test.dark.svg", "<svg>dark</svg>", now);
+    fs.setFile("docs/mmd/test.svg", "<svg>cached</svg>", now);
 
     const renderer = new MockRenderer(["flowchart"]);
 
@@ -119,7 +155,7 @@ describe("renderDiagrams", () => {
     });
 
     expect(results).toHaveLength(1);
-    expect(renderer.renderCalls).toHaveLength(2);
+    expect(renderer.renderCalls).toHaveLength(1);
   });
 
   test("uses fallback renderer for unsupported diagram types", async () => {
@@ -137,10 +173,10 @@ describe("renderDiagrams", () => {
     });
 
     expect(primary.renderCalls).toHaveLength(0);
-    expect(fallback.renderCalls).toHaveLength(2);
+    expect(fallback.renderCalls).toHaveLength(1);
   });
 
-  test("renders when SVGs do not exist yet", async () => {
+  test("renders when SVG does not exist yet", async () => {
     const fs = new MockFileSystem();
     fs.setFile("docs/mmd/new.mmd", "sequenceDiagram\n  A->>B: Hi");
 
@@ -154,5 +190,25 @@ describe("renderDiagrams", () => {
     });
 
     expect(results).toHaveLength(1);
+  });
+
+  test("cleans up old .light.svg and .dark.svg files", async () => {
+    const fs = new MockFileSystem();
+    fs.setFile("docs/mmd/test.mmd", "flowchart TD\n  A --> B");
+    fs.setFile("docs/mmd/test.light.svg", "<svg>old-light</svg>");
+    fs.setFile("docs/mmd/test.dark.svg", "<svg>old-dark</svg>");
+
+    const renderer = new MockRenderer(["flowchart"]);
+
+    await renderDiagrams(config, {
+      renderer,
+      fallbackRenderer: renderer,
+      fs,
+      mmdFiles: ["docs/mmd/test.mmd"],
+    });
+
+    expect(await fs.exists("docs/mmd/test.svg")).toBe(true);
+    expect(await fs.exists("docs/mmd/test.light.svg")).toBe(false);
+    expect(await fs.exists("docs/mmd/test.dark.svg")).toBe(false);
   });
 });

@@ -86,16 +86,14 @@ describe("generateDiagramName", () => {
 });
 
 describe("replaceBlocksWithAnchors", () => {
-  test("replaces a single block with anchor and picture tag", () => {
+  test("replaces a single block with anchor and markdown image", () => {
     const md = "# Title\n\n```mermaid\nflowchart TD\n  A --> B\n```\n\nMore text\n";
     const blocks = extractMermaidBlocks(md, "README.md");
     const result = replaceBlocksWithAnchors(md, blocks, "docs/mmd");
 
     expect(result).toContain("<!-- mmd:readme-0 -->");
-    expect(result).toContain("<picture>");
-    expect(result).toContain('media="(prefers-color-scheme: dark)"');
-    expect(result).toContain("docs/mmd/readme-0.dark.svg");
-    expect(result).toContain("docs/mmd/readme-0.light.svg");
+    expect(result).toContain("![Readme 0](docs/mmd/readme-0.svg)");
+    expect(result).not.toContain("<picture>");
     expect(result).not.toContain("```mermaid");
     expect(result).toContain("# Title");
     expect(result).toContain("More text");

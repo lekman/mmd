@@ -1,9 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import {
-  findAnchors,
-  generatePictureTag,
-  injectPictureTags,
-} from "../../../src/services/inject.ts";
+import { findAnchors, generateImageTag, injectImageTags } from "../../../src/services/inject.ts";
 
 describe("findAnchors", () => {
   test("finds a single anchor comment", () => {
@@ -38,27 +34,27 @@ describe("findAnchors", () => {
   });
 });
 
-describe("generatePictureTag", () => {
-  test("generates valid picture tag with dark and light sources", () => {
-    const tag = generatePictureTag("system-context", "docs/mmd");
+describe("generateImageTag", () => {
+  test("generates standard markdown image with anchor", () => {
+    const tag = generateImageTag("system-context", "docs/mmd");
     expect(tag).toContain("<!-- mmd:system-context -->");
-    expect(tag).toContain("<picture>");
-    expect(tag).toContain('media="(prefers-color-scheme: dark)"');
-    expect(tag).toContain('srcset="docs/mmd/system-context.dark.svg"');
-    expect(tag).toContain('srcset="docs/mmd/system-context.light.svg"');
-    expect(tag).toContain('alt="System Context"');
-    expect(tag).toContain('src="docs/mmd/system-context.light.svg"');
-    expect(tag).toContain("</picture>");
+    expect(tag).toContain("![System Context](docs/mmd/system-context.svg)");
   });
 
   test("computes alt text from diagram name", () => {
-    const tag = generatePictureTag("ci-pipeline-flow", "docs/mmd");
-    expect(tag).toContain('alt="Ci Pipeline Flow"');
+    const tag = generateImageTag("ci-pipeline-flow", "docs/mmd");
+    expect(tag).toContain("![Ci Pipeline Flow]");
+  });
+
+  test("does not contain picture tags", () => {
+    const tag = generateImageTag("test", "docs/mmd");
+    expect(tag).not.toContain("<picture>");
+    expect(tag).not.toContain("prefers-color-scheme");
   });
 });
 
-describe("injectPictureTags", () => {
-  test("replaces anchor + existing picture tag with fresh picture tag", () => {
+describe("injectImageTags", () => {
+  test("replaces anchor + existing picture tag with markdown image", () => {
     const md = [
       "# Architecture",
       "",
@@ -72,37 +68,38 @@ describe("injectPictureTags", () => {
       "More text",
     ].join("\n");
 
-    const result = injectPictureTags(md, "README.md", "docs/mmd");
+    const result = injectImageTags(md, "README.md", "docs/mmd");
     expect(result).toContain("<!-- mmd:system-context -->");
-    expect(result).toContain("docs/mmd/system-context.dark.svg");
-    expect(result).toContain("docs/mmd/system-context.light.svg");
+    expect(result).toContain("![System Context](docs/mmd/system-context.svg)");
+    expect(result).not.toContain("<picture>");
     expect(result).not.toContain("old/path");
     expect(result).toContain("More text");
   });
 
-  test("replaces anchor + img tag (non-picture format)", () => {
-    const md = ["<!-- mmd:diagram -->", "![Diagram](docs/mmd/diagram.svg)", "", "Text below"].join(
-      "\n"
-    );
+  test("replaces anchor + old img tag with markdown image", () => {
+    const md = [
+      "<!-- mmd:diagram -->",
+      "![Diagram](docs/mmd/diagram.old.svg)",
+      "",
+      "Text below",
+    ].join("\n");
 
-    const result = injectPictureTags(md, "test.md", "docs/mmd");
-    expect(result).toContain("<picture>");
-    expect(result).toContain("docs/mmd/diagram.dark.svg");
-    expect(result).not.toContain("![Diagram]");
+    const result = injectImageTags(md, "test.md", "docs/mmd");
+    expect(result).toContain("![Diagram](docs/mmd/diagram.svg)");
+    expect(result).not.toContain("diagram.old.svg");
     expect(result).toContain("Text below");
   });
 
   test("handles anchor with no following content to replace", () => {
     const md = "# Title\n\n<!-- mmd:standalone -->\n";
-    const result = injectPictureTags(md, "test.md", "docs/mmd");
+    const result = injectImageTags(md, "test.md", "docs/mmd");
     expect(result).toContain("<!-- mmd:standalone -->");
-    expect(result).toContain("<picture>");
-    expect(result).toContain("docs/mmd/standalone.dark.svg");
+    expect(result).toContain("![Standalone](docs/mmd/standalone.svg)");
   });
 
   test("returns unchanged content when no anchors", () => {
     const md = "# No anchors\nJust text.\n";
-    const result = injectPictureTags(md, "test.md", "docs/mmd");
+    const result = injectImageTags(md, "test.md", "docs/mmd");
     expect(result).toBe(md);
   });
 
@@ -115,8 +112,8 @@ describe("injectPictureTags", () => {
       "![Second](old.svg)",
     ].join("\n");
 
-    const result = injectPictureTags(md, "test.md", "docs/mmd");
-    expect(result).toContain("docs/mmd/first.dark.svg");
-    expect(result).toContain("docs/mmd/second.dark.svg");
+    const result = injectImageTags(md, "test.md", "docs/mmd");
+    expect(result).toContain("![First](docs/mmd/first.svg)");
+    expect(result).toContain("![Second](docs/mmd/second.svg)");
   });
 });

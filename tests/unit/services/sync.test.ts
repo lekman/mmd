@@ -30,14 +30,14 @@ describe("sync", () => {
     // Extract should have created .mmd file
     expect(await fs.exists("docs/mmd/readme-0.mmd")).toBe(true);
 
-    // Render should have created SVGs
-    expect(await fs.exists("docs/mmd/readme-0.light.svg")).toBe(true);
-    expect(await fs.exists("docs/mmd/readme-0.dark.svg")).toBe(true);
+    // Render should have created single SVG
+    expect(await fs.exists("docs/mmd/readme-0.svg")).toBe(true);
 
-    // Inject should have updated the markdown
+    // Inject should have updated the markdown with image tag
     const updatedMd = await fs.readFile("README.md");
     expect(updatedMd).toContain("<!-- mmd:readme-0 -->");
-    expect(updatedMd).toContain("<picture>");
+    expect(updatedMd).toContain("![Readme 0](docs/mmd/readme-0.svg)");
+    expect(updatedMd).not.toContain("<picture>");
     expect(updatedMd).not.toContain("```mermaid");
 
     expect(result.extracted).toBe(1);

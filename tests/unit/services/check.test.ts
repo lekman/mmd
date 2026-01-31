@@ -5,7 +5,7 @@ describe("checkOrphanedBlocks", () => {
   test("detects orphaned mermaid block in file with anchors", () => {
     const md = [
       "<!-- mmd:existing -->",
-      "<picture>...</picture>",
+      "![Existing](docs/mmd/existing.svg)",
       "",
       "```mermaid",
       "flowchart TD",
@@ -23,10 +23,10 @@ describe("checkOrphanedBlocks", () => {
   test("returns no warnings for file with only anchors (no inline blocks)", () => {
     const md = [
       "<!-- mmd:first -->",
-      "<picture>...</picture>",
+      "![Existing](docs/mmd/existing.svg)",
       "",
       "<!-- mmd:second -->",
-      "<picture>...</picture>",
+      "![Existing](docs/mmd/existing.svg)",
     ].join("\n");
 
     const warnings = checkOrphanedBlocks(md, "test.md");
@@ -49,7 +49,7 @@ describe("checkOrphanedBlocks", () => {
   test("detects multiple orphaned blocks", () => {
     const md = [
       "<!-- mmd:first -->",
-      "<picture>...</picture>",
+      "![Existing](docs/mmd/existing.svg)",
       "",
       "```mermaid",
       "flowchart TD",

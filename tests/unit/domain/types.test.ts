@@ -7,6 +7,7 @@ import {
   type MermaidBlock,
   type RenderResult,
   type ThemeConfig,
+  type ThemeMode,
 } from "../../../src/domain/types.ts";
 
 describe("DiagramType detection", () => {
@@ -168,6 +169,34 @@ describe("isValidThemeConfig", () => {
     expect(isValidThemeConfig("string")).toBe(false);
     expect(isValidThemeConfig(42)).toBe(false);
   });
+
+  test("accepts config with mode light", () => {
+    expect(
+      isValidThemeConfig({ outputDir: "docs/mmd", mode: "light", themes: { light: {}, dark: {} } })
+    ).toBe(true);
+  });
+
+  test("accepts config with mode dark", () => {
+    expect(
+      isValidThemeConfig({ outputDir: "docs/mmd", mode: "dark", themes: { light: {}, dark: {} } })
+    ).toBe(true);
+  });
+
+  test("accepts config without mode (defaults to light)", () => {
+    expect(isValidThemeConfig({ outputDir: "docs/mmd", themes: { light: {}, dark: {} } })).toBe(
+      true
+    );
+  });
+
+  test("rejects config with invalid mode", () => {
+    expect(
+      isValidThemeConfig({
+        outputDir: "docs/mmd",
+        mode: "invalid",
+        themes: { light: {}, dark: {} },
+      })
+    ).toBe(false);
+  });
 });
 
 describe("MermaidBlock type", () => {
@@ -189,16 +218,23 @@ describe("MermaidBlock type", () => {
   });
 });
 
+describe("ThemeMode type", () => {
+  test("accepts light and dark values", () => {
+    const light: ThemeMode = "light";
+    const dark: ThemeMode = "dark";
+    expect(light).toBe("light");
+    expect(dark).toBe("dark");
+  });
+});
+
 describe("RenderResult type", () => {
-  test("RenderResult has required properties", () => {
+  test("RenderResult has single svgPath", () => {
     const result: RenderResult = {
       sourcePath: "docs/mmd/system-context.mmd",
-      lightSvgPath: "docs/mmd/system-context.light.svg",
-      darkSvgPath: "docs/mmd/system-context.dark.svg",
+      svgPath: "docs/mmd/system-context.svg",
     };
     expect(result.sourcePath).toBe("docs/mmd/system-context.mmd");
-    expect(result.lightSvgPath).toBe("docs/mmd/system-context.light.svg");
-    expect(result.darkSvgPath).toBe("docs/mmd/system-context.dark.svg");
+    expect(result.svgPath).toBe("docs/mmd/system-context.svg");
   });
 });
 
