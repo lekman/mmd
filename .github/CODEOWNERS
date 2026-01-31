@@ -2,6 +2,7 @@
 * @lekman
 
 # Release-please files — bot ownership enables auto-approve via branch protection
-/package.json @lekman @app/lekman-release-please-bot
-/docs/CHANGELOG.md @lekman @app/lekman-release-please-bot
-/.release-please-manifest.json @lekman @app/lekman-release-please-bot
+# The GITHUB_TOKEN (github-actions bot) approves; the app bot creates the PR
+/package.json @lekman @app/github-actions @app/lekman-release-please-bot
+/docs/CHANGELOG.md @lekman @app/github-actions @app/lekman-release-please-bot
+/.release-please-manifest.json @lekman @app/github-actions @app/lekman-release-please-bot
