@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.1](https://github.com/lekman/mmd/compare/mmd-v1.2.0...mmd-v1.2.1) (2026-01-31)
+
+
+### Documentation
+
+* consolidate MAINTAINERS.md into CONTRIBUTING.md and move under docs ([f1be0c3](https://github.com/lekman/mmd/commit/f1be0c33cd2961e9d60fc35243c1827c90f633fe))
+
 ## [1.2.0](https://github.com/lekman/mmd/compare/mmd-v1.1.0...mmd-v1.2.0) (2026-01-31)
 
 
