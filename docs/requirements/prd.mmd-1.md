@@ -571,13 +571,9 @@ Placed in the repo root. Defines shared theme variables for all diagrams. The de
 
 The `inject` command produces:
 
-```html
+```markdown
 <!-- mmd:system-context -->
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/mmd/system-context.dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="docs/mmd/system-context.light.svg">
-  <img alt="System Context" src="docs/mmd/system-context.light.svg">
-</picture>
+![System Context](docs/mmd/system-context.svg)
 ```
 
 `srcset` paths are relative to the `.md` file that contains the anchor.

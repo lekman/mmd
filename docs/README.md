@@ -18,20 +18,29 @@ Extract, render, and inject themed SVGs into Markdown.
 - AI coding assistant rule files for Claude Code, Cursor, and GitHub Copilot
 - Supports 15 Mermaid diagram types: flowchart, sequence, class, state, ER, C4, gantt, pie, gitgraph, mindmap, timeline, quadrant, kanban, requirement, architecture
 
-## Installation
+## Installation and Usage
 
-Requires [Bun](https://bun.sh/) runtime.
+Requires [Bun](https://bun.sh/) runtime (the CLI uses Bun APIs internally).
 
 ```bash
-# Install base mermaid-cli renderer
-bun install -g @mermaid-js/mermaid-cli
-
-# Run directly (no install needed)
-bunx @lekman/mmd sync
-
-# Or install globally
+# Install mmd
 bun add -g @lekman/mmd
+
+# Or run directly without installing
+bunx @lekman/mmd sync
 ```
+
+### Fallback renderer (mermaid-cli)
+
+The primary renderer ([beautiful-mermaid](https://github.com/lukilabs/beautiful-mermaid)) handles flowchart and state diagrams natively. All other diagram types require `@mermaid-js/mermaid-cli` (mmdc) as a fallback renderer.
+
+Install mmdc globally using npm before running `sync` or `render` on non-flowchart/state diagrams:
+
+```bash
+npm install -g @mermaid-js/mermaid-cli
+```
+
+> **Note:** Use `npm` (not `bun`) for global mermaid-cli installation due to a Bun compatibility issue with git dependencies.
 
 ## Quick Start
 

@@ -58,7 +58,7 @@ export class MmdcRenderer implements IRenderer {
     if (!mmdcPath) {
       throw new Error(
         "mmdc is required for this diagram type but @mermaid-js/mermaid-cli is not installed.\n" +
-          "Install it with: bun add -g @mermaid-js/mermaid-cli"
+          "Install it with: npm install -g @mermaid-js/mermaid-cli"
       );
     }
 
