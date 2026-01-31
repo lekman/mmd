@@ -39,6 +39,9 @@ export interface MermaidBlock {
   diagramType: DiagramType;
 }
 
+/** Theme mode selection: light or dark. */
+export type ThemeMode = "light" | "dark";
+
 /** Theme definition for a single mode (light or dark). */
 export interface ThemeDef {
   theme?: string;
@@ -48,6 +51,7 @@ export interface ThemeDef {
 /** Parsed .mermaid.json configuration. */
 export interface ThemeConfig {
   outputDir: string;
+  mode?: ThemeMode;
   themes: {
     light: ThemeDef;
     dark: ThemeDef;
@@ -59,8 +63,7 @@ export interface ThemeConfig {
 /** Result of rendering a single .mmd file. */
 export interface RenderResult {
   sourcePath: string;
-  lightSvgPath: string;
-  darkSvgPath: string;
+  svgPath: string;
 }
 
 /** A parsed <!-- mmd:name --> anchor comment in a Markdown file. */
@@ -116,6 +119,7 @@ export function isValidThemeConfig(value: unknown): value is ThemeConfig {
   if (value === null || value === undefined || typeof value !== "object") return false;
   const obj = value as Record<string, unknown>;
   if (typeof obj.outputDir !== "string") return false;
+  if (obj.mode !== undefined && obj.mode !== "light" && obj.mode !== "dark") return false;
   if (obj.themes === null || typeof obj.themes !== "object") return false;
   const themes = obj.themes as Record<string, unknown>;
   if (themes.light === null || typeof themes.light !== "object") return false;

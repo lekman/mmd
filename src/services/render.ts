@@ -19,34 +19,46 @@ export interface RenderOptions {
   fs: IFileSystem;
   mmdFiles: string[];
   force?: boolean;
+  /** Path to .mermaid.json — used for config mtime staleness. */
+  configPath?: string;
 }
 
 /**
- * Render .mmd files to dual light/dark SVGs using theme config.
- * Skips files where SVGs are newer than source unless force is true.
+ * Render .mmd files to single-mode SVGs using the selected theme.
+ * Skips files where SVG is newer than both source and config unless force is true.
+ * Cleans up old .light.svg / .dark.svg files from the dual-mode era.
  */
 export async function renderDiagrams(
   config: ThemeConfig,
   options: RenderOptions
 ): Promise<RenderResult[]> {
-  const { renderer, fallbackRenderer, fs, mmdFiles, force = false } = options;
+  const { renderer, fallbackRenderer, fs, mmdFiles, force = false, configPath } = options;
+  const mode = config.mode ?? "light";
+  const theme = config.themes[mode];
   const results: RenderResult[] = [];
 
+  // Get config mtime for staleness comparison
+  let configMtime = 0;
+  if (configPath) {
+    const configExists = await fs.exists(configPath);
+    if (configExists) {
+      configMtime = await fs.mtime(configPath);
+    }
+  }
+
   for (const mmdPath of mmdFiles) {
-    const lightPath = mmdPath.replace(/\.mmd$/, ".light.svg");
-    const darkPath = mmdPath.replace(/\.mmd$/, ".dark.svg");
+    const svgPath = mmdPath.replace(/\.mmd$/, ".svg");
 
     // Staleness check
     if (!force) {
-      const lightExists = await fs.exists(lightPath);
-      const darkExists = await fs.exists(darkPath);
+      const svgExists = await fs.exists(svgPath);
 
-      if (lightExists && darkExists) {
+      if (svgExists) {
         const sourceMtime = await fs.mtime(mmdPath);
-        const lightMtime = await fs.mtime(lightPath);
-        const darkMtime = await fs.mtime(darkPath);
+        const svgMtime = await fs.mtime(svgPath);
+        const newestSource = Math.max(sourceMtime, configMtime);
 
-        if (lightMtime >= sourceMtime && darkMtime >= sourceMtime) {
+        if (svgMtime >= newestSource) {
           continue;
         }
       }
@@ -58,20 +70,20 @@ export async function renderDiagrams(
     // Choose renderer based on diagram type
     const activeRenderer = BEAUTIFUL_MERMAID_TYPES.has(diagramType) ? renderer : fallbackRenderer;
 
-    // Render light variant
-    const lightContent = prependThemeInit(content, config.themes.light);
-    const lightSvg = await activeRenderer.render(lightContent);
-    await fs.writeFile(lightPath, lightSvg);
+    // Render single SVG with selected theme
+    const themed = prependThemeInit(content, theme);
+    const svg = await activeRenderer.render(themed);
+    await fs.writeFile(svgPath, svg);
 
-    // Render dark variant
-    const darkContent = prependThemeInit(content, config.themes.dark);
-    const darkSvg = await activeRenderer.render(darkContent);
-    await fs.writeFile(darkPath, darkSvg);
+    // Clean up old dual-mode files
+    const lightPath = mmdPath.replace(/\.mmd$/, ".light.svg");
+    const darkPath = mmdPath.replace(/\.mmd$/, ".dark.svg");
+    await fs.delete(lightPath);
+    await fs.delete(darkPath);
 
     results.push({
       sourcePath: mmdPath,
-      lightSvgPath: lightPath,
-      darkSvgPath: darkPath,
+      svgPath,
     });
   }
 

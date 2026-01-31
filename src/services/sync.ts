@@ -1,7 +1,7 @@
 import type { IFileSystem, IRenderer } from "../domain/interfaces.ts";
 import type { ThemeConfig } from "../domain/types.ts";
 import { extractMermaidBlocks, replaceBlocksWithAnchors } from "./extract.ts";
-import { injectPictureTags } from "./inject.ts";
+import { injectImageTags } from "./inject.ts";
 import { renderDiagrams } from "./render.ts";
 
 export interface SyncOptions {
@@ -11,6 +11,8 @@ export interface SyncOptions {
   fallbackRenderer: IRenderer;
   fs: IFileSystem;
   force?: boolean;
+  /** Path to .mermaid.json for config mtime staleness. */
+  configPath?: string;
 }
 
 export interface SyncResult {
@@ -22,7 +24,7 @@ export interface SyncResult {
  * Run the full pipeline: extract → render → inject.
  */
 export async function sync(options: SyncOptions): Promise<SyncResult> {
-  const { config, mdFiles, renderer, fallbackRenderer, fs, force } = options;
+  const { config, mdFiles, renderer, fallbackRenderer, fs, force, configPath } = options;
   const outputDir = config.outputDir ?? "docs/mmd";
   let totalExtracted = 0;
   const mmdFiles: string[] = [];
@@ -55,12 +57,13 @@ export async function sync(options: SyncOptions): Promise<SyncResult> {
     fs,
     mmdFiles,
     force,
+    configPath,
   });
 
-  // Phase 3: Inject picture tags (re-read updated markdown)
+  // Phase 3: Inject image tags (re-read updated markdown)
   for (const mdFile of mdFiles) {
     const content = await fs.readFile(mdFile);
-    const injected = injectPictureTags(content, mdFile, outputDir);
+    const injected = injectImageTags(content, mdFile, outputDir);
     if (injected !== content) {
       await fs.writeFile(mdFile, injected);
     }

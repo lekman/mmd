@@ -24,34 +24,23 @@ export function findAnchors(markdown: string, sourceFile: string): AnchorRef[] {
 }
 
 /**
- * Generate a <picture> tag with dark/light sources for an anchor.
+ * Generate a standard markdown image tag for an anchor.
  */
-export function generatePictureTag(name: string, outputDir: string): string {
+export function generateImageTag(name: string, outputDir: string): string {
   const alt = name
     .split("-")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
 
-  return [
-    `<!-- mmd:${name} -->`,
-    "<picture>",
-    `  <source media="(prefers-color-scheme: dark)" srcset="${outputDir}/${name}.dark.svg">`,
-    `  <source media="(prefers-color-scheme: light)" srcset="${outputDir}/${name}.light.svg">`,
-    `  <img alt="${alt}" src="${outputDir}/${name}.light.svg">`,
-    "</picture>",
-  ].join("\n");
+  return [`<!-- mmd:${name} -->`, `![${alt}](${outputDir}/${name}.svg)`].join("\n");
 }
 
 /**
- * Inject <picture> tags at anchor positions in markdown content.
+ * Inject markdown image tags at anchor positions in markdown content.
  * Replaces the anchor line and any following content block (picture tag, img tag, etc.)
  * until the next blank line or anchor.
  */
-export function injectPictureTags(
-  markdown: string,
-  _sourceFile: string,
-  outputDir: string
-): string {
+export function injectImageTags(markdown: string, _sourceFile: string, outputDir: string): string {
   const lines = markdown.split("\n");
   const result: string[] = [];
   let i = 0;
@@ -63,7 +52,7 @@ export function injectPictureTags(
     if (match?.[1]) {
       const name = match[1];
       // Replace anchor and consume any following content block
-      result.push(generatePictureTag(name, outputDir));
+      result.push(generateImageTag(name, outputDir));
       i++;
 
       // Skip lines until we hit a blank line, another anchor, or end of file

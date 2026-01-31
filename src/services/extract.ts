@@ -1,5 +1,6 @@
 import type { MermaidBlock } from "../domain/types.ts";
 import { detectDiagramType } from "../domain/types.ts";
+import { generateImageTag } from "./inject.ts";
 
 const MERMAID_FENCE_RE = /^```mermaid\s*$/;
 const FENCE_CLOSE_RE = /^```\s*$/;
@@ -55,25 +56,7 @@ export function generateDiagramName(sourceFile: string, index: number): string {
 }
 
 /**
- * Generate the <picture> tag HTML for an anchor.
- */
-function pictureTag(name: string, outputDir: string): string {
-  const alt = name
-    .split("-")
-    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
-    .join(" ");
-  return [
-    `<!-- mmd:${name} -->`,
-    "<picture>",
-    `  <source media="(prefers-color-scheme: dark)" srcset="${outputDir}/${name}.dark.svg">`,
-    `  <source media="(prefers-color-scheme: light)" srcset="${outputDir}/${name}.light.svg">`,
-    `  <img alt="${alt}" src="${outputDir}/${name}.light.svg">`,
-    "</picture>",
-  ].join("\n");
-}
-
-/**
- * Replace fenced mermaid blocks in markdown content with anchor comments and <picture> tags.
+ * Replace fenced mermaid blocks in markdown with anchor comments and image tags.
  * Blocks are replaced in reverse order to preserve line numbers.
  */
 export function replaceBlocksWithAnchors(
@@ -91,7 +74,7 @@ export function replaceBlocksWithAnchors(
     const start = block.startLine - 1; // 0-based index of opening fence
     const end = block.endLine; // 0-based index after closing fence
 
-    const replacement = pictureTag(block.name, outputDir);
+    const replacement = generateImageTag(block.name, outputDir);
     lines.splice(start, end - start, replacement);
   }
 

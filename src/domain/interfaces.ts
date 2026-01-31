@@ -19,6 +19,8 @@ export interface IFileSystem {
   /** List files matching a glob pattern. */
   glob(pattern: string, cwd: string): Promise<string[]>;
   mkdir(path: string): Promise<void>;
+  /** Delete a file. No error if file does not exist. */
+  delete(path: string): Promise<void>;
 }
 
 /** Extracts Mermaid blocks from Markdown files. */
@@ -27,8 +29,8 @@ export interface IExtractor {
   extract(markdownContent: string, sourceFile: string): MermaidBlock[];
 }
 
-/** Injects <picture> tags into Markdown files at anchor positions. */
+/** Injects markdown image tags into Markdown files at anchor positions. */
 export interface IInjector {
-  /** Find all anchor comments and generate picture tags. */
+  /** Find all anchor comments and generate image tags. */
   inject(markdownContent: string, sourceFile: string, outputDir: string): string;
 }
