@@ -4,40 +4,69 @@ import { generateImageTag } from "./inject.ts";
 
 const MERMAID_FENCE_RE = /^```mermaid\s*$/;
 const FENCE_CLOSE_RE = /^```\s*$/;
+const BACKTICK_RUN_RE = /^(`{3,})/;
 
 /**
  * Extract all fenced mermaid blocks from markdown content.
  * Returns an array of MermaidBlock with content, line numbers, and auto-generated names.
+ *
+ * Skips mermaid blocks nested inside higher-level code fences (e.g. ````markdown examples).
  */
 export function extractMermaidBlocks(markdown: string, sourceFile: string): MermaidBlock[] {
   const lines = markdown.split("\n");
   const blocks: MermaidBlock[] = [];
   let blockIndex = 0;
-  let inBlock = false;
+  let inMermaidBlock = false;
+  let inOtherFence = false;
+  let otherFenceLength = 0;
   let blockStart = -1;
   let contentLines: string[] = [];
 
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i] as string;
-    if (!inBlock && MERMAID_FENCE_RE.test(line.trim())) {
-      inBlock = true;
+    const trimmed = line.trim();
+
+    // Inside a non-mermaid code fence — skip until matching close
+    if (inOtherFence) {
+      const backticks = trimmed.match(BACKTICK_RUN_RE)?.[1];
+      if (backticks && backticks.length >= otherFenceLength && trimmed === backticks) {
+        inOtherFence = false;
+      }
+      continue;
+    }
+
+    // Inside a mermaid block — collect content or close
+    if (inMermaidBlock) {
+      if (FENCE_CLOSE_RE.test(trimmed)) {
+        const content = contentLines.join("\n");
+        blocks.push({
+          content,
+          sourceFile,
+          startLine: blockStart,
+          endLine: i + 1, // 1-based, inclusive of closing fence
+          name: generateDiagramName(sourceFile, blockIndex),
+          diagramType: detectDiagramType(content),
+        });
+        blockIndex++;
+        inMermaidBlock = false;
+        contentLines = [];
+      } else {
+        contentLines.push(line);
+      }
+      continue;
+    }
+
+    // Not in any fence — check for openers
+    if (MERMAID_FENCE_RE.test(trimmed)) {
+      inMermaidBlock = true;
       blockStart = i + 1; // 1-based
       contentLines = [];
-    } else if (inBlock && FENCE_CLOSE_RE.test(line.trim())) {
-      const content = contentLines.join("\n");
-      blocks.push({
-        content,
-        sourceFile,
-        startLine: blockStart,
-        endLine: i + 1, // 1-based, inclusive of closing fence
-        name: generateDiagramName(sourceFile, blockIndex),
-        diagramType: detectDiagramType(content),
-      });
-      blockIndex++;
-      inBlock = false;
-      contentLines = [];
-    } else if (inBlock) {
-      contentLines.push(line);
+    } else {
+      const backticks = trimmed.match(BACKTICK_RUN_RE)?.[1];
+      if (backticks) {
+        inOtherFence = true;
+        otherFenceLength = backticks.length;
+      }
     }
   }
 

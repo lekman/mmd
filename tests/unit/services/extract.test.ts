@@ -58,6 +58,57 @@ describe("extractMermaidBlocks", () => {
     expect(blocks).toHaveLength(0);
   });
 
+  test("ignores mermaid blocks inside higher-level code fences", () => {
+    const md = [
+      "# Example",
+      "",
+      "````markdown",
+      "```mermaid",
+      "flowchart TD",
+      "  A --> B",
+      "```",
+      "````",
+      "",
+    ].join("\n");
+    const blocks = extractMermaidBlocks(md, "README.md");
+    expect(blocks).toHaveLength(0);
+  });
+
+  test("ignores indented mermaid blocks inside higher-level code fences", () => {
+    const md = [
+      "1. Add a diagram:",
+      "",
+      "    ````markdown",
+      "    ```mermaid",
+      "    flowchart TD",
+      "      A --> B",
+      "    ```",
+      "    ````",
+      "",
+    ].join("\n");
+    const blocks = extractMermaidBlocks(md, "README.md");
+    expect(blocks).toHaveLength(0);
+  });
+
+  test("extracts real mermaid blocks after a higher-level code fence closes", () => {
+    const md = [
+      "````markdown",
+      "```mermaid",
+      "flowchart TD",
+      "  A --> B",
+      "```",
+      "````",
+      "",
+      "```mermaid",
+      "sequenceDiagram",
+      "  Alice->>Bob: Hi",
+      "```",
+    ].join("\n");
+    const blocks = extractMermaidBlocks(md, "README.md");
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]!.diagramType).toBe("sequence");
+  });
+
   test("assigns correct line numbers for blocks", () => {
     const md = "line1\nline2\n```mermaid\nflowchart TD\n  A-->B\n```\nline7\n";
     const blocks = extractMermaidBlocks(md, "test.md");
