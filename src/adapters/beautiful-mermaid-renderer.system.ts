@@ -4,7 +4,7 @@ import { BEAUTIFUL_MERMAID_TYPES } from "../domain/types.ts";
 
 /**
  * Renderer using beautiful-mermaid (zero-DOM, TypeScript-native).
- * Supports: flowchart, state, sequence, class, ER.
+ * Supports: flowchart, state (v0.1.x).
  *
  * This is a system adapter — excluded from unit test coverage.
  */

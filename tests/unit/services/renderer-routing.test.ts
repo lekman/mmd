@@ -3,8 +3,11 @@ import type { DiagramType } from "../../../src/domain/types.ts";
 import { BEAUTIFUL_MERMAID_TYPES } from "../../../src/domain/types.ts";
 
 describe("renderer routing", () => {
-  const beautifulTypes: DiagramType[] = ["flowchart", "state", "sequence", "class", "er"];
+  const beautifulTypes: DiagramType[] = ["flowchart", "state"];
   const mmdcOnlyTypes: DiagramType[] = [
+    "sequence",
+    "class",
+    "er",
     "c4",
     "gantt",
     "pie",
@@ -17,7 +20,7 @@ describe("renderer routing", () => {
     "architecture",
   ];
 
-  test("beautiful-mermaid handles flowchart, state, sequence, class, er", () => {
+  test("beautiful-mermaid handles flowchart and state", () => {
     for (const type of beautifulTypes) {
       expect(BEAUTIFUL_MERMAID_TYPES.has(type)).toBe(true);
     }

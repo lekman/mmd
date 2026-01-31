@@ -108,15 +108,15 @@ describe("DiagramType detection", () => {
 });
 
 describe("BEAUTIFUL_MERMAID_TYPES", () => {
-  test("includes flowchart, state, sequence, class, er", () => {
+  test("includes flowchart and state", () => {
     expect(BEAUTIFUL_MERMAID_TYPES).toContain("flowchart");
     expect(BEAUTIFUL_MERMAID_TYPES).toContain("state");
-    expect(BEAUTIFUL_MERMAID_TYPES).toContain("sequence");
-    expect(BEAUTIFUL_MERMAID_TYPES).toContain("class");
-    expect(BEAUTIFUL_MERMAID_TYPES).toContain("er");
   });
 
-  test("does not include c4 or gantt", () => {
+  test("does not include types unsupported by beautiful-mermaid v0.1.x", () => {
+    expect(BEAUTIFUL_MERMAID_TYPES).not.toContain("sequence");
+    expect(BEAUTIFUL_MERMAID_TYPES).not.toContain("class");
+    expect(BEAUTIFUL_MERMAID_TYPES).not.toContain("er");
     expect(BEAUTIFUL_MERMAID_TYPES).not.toContain("c4");
     expect(BEAUTIFUL_MERMAID_TYPES).not.toContain("gantt");
   });

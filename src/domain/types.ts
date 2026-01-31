@@ -21,15 +21,12 @@ export type DiagramType =
   | "unknown";
 
 /**
- * Diagram types supported by the beautiful-mermaid renderer.
+ * Diagram types supported by the beautiful-mermaid renderer (v0.1.x).
  * All other types fall back to mmdc.
  */
 export const BEAUTIFUL_MERMAID_TYPES: ReadonlySet<DiagramType> = new Set<DiagramType>([
   "flowchart",
   "state",
-  "sequence",
-  "class",
-  "er",
 ]);
 
 /** An extracted fenced Mermaid block from a Markdown file. */

@@ -1,24 +1,19 @@
+import { existsSync } from "node:fs";
+import { join } from "node:path";
 import type { IRenderer } from "../domain/interfaces.ts";
 import type { DiagramType } from "../domain/types.ts";
 
 /**
  * Resolve the mmdc binary path. Checks:
- * 1. Locally installed node_modules/.bin/mmdc
+ * 1. Local node_modules/.bin/mmdc
  * 2. Global PATH lookup via `which`
  *
  * Returns the resolved path, or null if not found.
  */
 function resolveMmdcBinary(): string | null {
-  // Check local node_modules
-  const localProc = Bun.spawnSync([
-    "node",
-    "-e",
-    "console.log(require.resolve('@mermaid-js/mermaid-cli/src/cli.js'))",
-  ]);
-  if (localProc.exitCode === 0) {
-    const resolved = localProc.stdout.toString().trim();
-    if (resolved) return resolved;
-  }
+  // Check local node_modules/.bin/mmdc
+  const localBin = join(process.cwd(), "node_modules", ".bin", "mmdc");
+  if (existsSync(localBin)) return localBin;
 
   // Check PATH
   const whichProc = Bun.spawnSync(["which", "mmdc"]);
@@ -58,7 +53,6 @@ export class MmdcRenderer implements IRenderer {
   async render(content: string): Promise<string> {
     const { writeFileSync, readFileSync, unlinkSync } = await import("node:fs");
     const { tmpdir } = await import("node:os");
-    const { join } = await import("node:path");
 
     const mmdcPath = resolveMmdcBinary();
     if (!mmdcPath) {
