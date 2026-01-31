@@ -1,12 +1,26 @@
-# Maintainers
+# Contributing to @lekman/mmd
 
-Development setup, commands, CI/CD pipelines, and release process for @lekman/mmd.
+## Getting Started
 
-## Primary Contact
+1. Fork and clone the repository:
 
-| Name | Role | GitHub |
-| ---- | ---- | ------ |
-| Tobias Lekman | Maintainer | [@lekman](https://github.com/lekman) |
+    ```bash
+    git clone https://github.com/<your-username>/mmd.git
+    cd mmd
+    ```
+
+2. Install dependencies:
+
+    ```bash
+    brew install oven-sh/bun/bun go-task semgrep
+    task install
+    ```
+
+3. Verify setup:
+
+    ```bash
+    task quality
+    ```
 
 ## Repository Structure
 
@@ -25,7 +39,6 @@ Development setup, commands, CI/CD pipelines, and release process for @lekman/mm
 ├── docs/
 │   ├── requirements/       # PRD documents
 │   ├── ARCHITECTURE.md     # System design and diagrams
-│   ├── MAINTAINERS.md      # This file
 │   ├── QA.md               # Test strategy and coverage
 │   ├── SECURITY.md         # Security policy and threat model
 │   └── CHANGELOG.md        # Auto-generated release history
@@ -42,13 +55,7 @@ Development setup, commands, CI/CD pipelines, and release process for @lekman/mm
 
 ## Task Runner
 
-All development commands use [Task](https://taskfile.dev/) with Bun as the runtime. Install both:
-
-```bash
-brew install oven-sh/bun/bun go-task
-```
-
-### Commands
+All development commands use [Task](https://taskfile.dev/) with Bun as the runtime.
 
 | Command | Alias | Description |
 | ------- | ----- | ----------- |
@@ -60,8 +67,6 @@ brew install oven-sh/bun/bun go-task
 | `task test:coverage` | `cov` | Tests with coverage report |
 | `task quality` | `q` | Run lint + typecheck + test |
 | `task build` | `b` | Build CLI bundle |
-
-### Task Libraries
 
 Additional commands are available via `@northbridge-security/ai-toolkit`:
 
@@ -75,60 +80,112 @@ Additional commands are available via `@northbridge-security/ai-toolkit`:
 
 ## Development Workflow
 
-1. Create a branch from `main`:
+This project uses Test-Driven Development (TDD). Follow the Red-Green-Refactor cycle:
+
+1. **Red** — Write a failing test that describes the expected behaviour
+2. **Green** — Write the minimum code to make the test pass
+3. **Refactor** — Improve the code while keeping tests green
+
+Run the quality gate before committing:
+
+```bash
+task quality    # Runs lint + typecheck + test
+```
+
+Pre-commit hooks run `lint` and `typecheck` automatically via Husky. If either check fails, the commit is rejected.
+
+## Pull Request Process
+
+1. Create a feature branch from `main`:
 
     ```bash
     git checkout -b feat/your-feature
     ```
 
-2. Write a failing test (Red):
+2. Make your changes following the [code style](#code-style) and [testing requirements](#testing-requirements).
 
-    ```bash
-    bun test tests/unit/services/your-feature.test.ts
-    ```
-
-3. Write the minimum code to pass (Green).
-
-4. Refactor while keeping tests green.
-
-5. Run the quality gate:
+3. Run the quality gate:
 
     ```bash
     task quality
     ```
 
-6. Commit using [Conventional Commits](https://www.conventionalcommits.org/):
+4. Push and open a PR against `main`.
 
-    ```bash
-    git commit -m "feat(render): add mtime-based staleness check"
-    ```
+5. Fill in the PR template: summary, changes, test plan, related issues.
 
-7. Push and open a PR against `main`.
+6. All CI checks must pass before merge:
 
-## Running Tests
+    | Check | Purpose |
+    | ----- | ------- |
+    | lint | Biome linting |
+    | typecheck | TypeScript type checking |
+    | test | Unit tests with coverage |
+    | security | Semgrep scan |
+
+7. PRs are reviewed by CodeRabbit (automated) and a maintainer.
+
+## Code Style
+
+[Biome](https://biomejs.dev/) handles formatting and linting. Configuration is in `biome.json`.
+
+- Double quotes, semicolons, ES5 trailing commas
+- 100 character line width, 2-space indentation
+- Imports organized automatically
+- No `console.log` in production code (enforced by Semgrep)
+
+Format and lint:
 
 ```bash
-task test                                        # All unit tests
-task test:coverage                               # With coverage report
-bun test tests/unit/services/extract.test.ts     # Single file
+task format     # Auto-format
+task lint       # Check linting
 ```
 
-Tests use mock implementations for external dependencies:
+## Testing Requirements
 
-- `tests/mocks/mock-renderer.ts` — returns fixed SVG strings
+- Business logic requires 80%+ line coverage
+- Validation code requires 100% coverage
+- System files (`*.system.ts`) and CLI commands (`src/cli/**`) are excluded from coverage
+- All tests use mocks for external dependencies (renderer, filesystem)
+- No network or subprocess calls in unit tests
+
+Tests use shared mock implementations:
+
+- `tests/mocks/mock-renderer.ts` — returns fixed SVG strings, tracks calls
 - `tests/mocks/mock-fs.ts` — operates on in-memory file maps
 
-No network or subprocess calls in unit tests.
-
-## Pre-commit Hooks
-
-Husky runs the following checks before every commit:
+Run tests:
 
 ```bash
-bun run lint && bun run typecheck
+task test              # Run unit tests
+task test:coverage     # Tests with coverage report
+bun test tests/unit/services/extract.test.ts   # Single file
 ```
 
-If either check fails, the commit is rejected. Fix the issues and commit again.
+## Commit Messages
+
+This project uses [Conventional Commits](https://www.conventionalcommits.org/) for automated versioning via release-please.
+
+Format: `<type>(<scope>): <description>`
+
+| Type | Purpose | Changelog |
+| ---- | ------- | --------- |
+| `feat` | New feature | Visible |
+| `fix` | Bug fix | Visible |
+| `perf` | Performance improvement | Visible |
+| `docs` | Documentation change | Visible |
+| `refactor` | Code change that neither fixes a bug nor adds a feature | Hidden |
+| `test` | Adding or updating tests | Hidden |
+| `chore` | Maintenance (dependencies, CI config) | Hidden |
+| `ci` | CI/CD pipeline changes | Hidden |
+
+Examples:
+
+```
+feat(render): add mtime-based staleness check
+fix(extract): handle nested fenced blocks in markdown
+docs: add architecture diagrams to ARCHITECTURE.md
+```
 
 ## CI Pipeline
 
@@ -139,11 +196,9 @@ GitHub Actions workflows run on PRs to `main`:
 | CI | `ci.yml` | PR to `main`, push to `main` | Lint, typecheck, test, security scan |
 | Release | `release.yml` | Push to `main` | Create release PR via release-please |
 | Auto-release | `auto-release.yml` | Release workflow completes | Auto-merge release PRs |
-| CD | (on release) | GitHub Release created | Build and publish to npm + GitHub Packages |
+| CD | `cd.yml` | GitHub Release created | Build and publish to npm + GitHub Packages |
 | Claude | `claude.yml` | `@claude` mention | Interactive Claude Code agent |
 | Code Review | `claude-code-review.yml` | PR open/sync | Automated code review |
-
-### CI Jobs
 
 The CI workflow runs these jobs in parallel:
 
@@ -155,11 +210,7 @@ The CI workflow runs these jobs in parallel:
 | security | Semgrep scan | `p/security-audit`, `p/secrets`, `p/typescript` |
 | quality-gate | (depends on all above) | All checks must pass for merge |
 
-## Quality Gate
-
-Every PR must pass all CI jobs before merging. The `quality-gate` job enforces this as a required status check on `main`.
-
-Locally, run `task quality` to check all gates before pushing.
+Every PR must pass all CI jobs before merging. The `quality-gate` job enforces this as a required status check on `main`. Locally, run `task quality` to check all gates before pushing.
 
 ## Release Process
 
@@ -175,21 +226,6 @@ Releases are automated using [release-please](https://github.com/googleapis/rele
     | -------- | --- |
     | npm | `https://www.npmjs.com/package/@lekman/mmd` |
     | GitHub Packages | `https://npm.pkg.github.com/@lekman/mmd` |
-
-Both publish steps must succeed. If either fails, the workflow fails to prevent version drift.
-
-### Conventional Commit Types
-
-| Type | Section in Changelog | Visible |
-| ---- | -------------------- | ------- |
-| `feat` | Features | Yes |
-| `fix` | Bug Fixes | Yes |
-| `perf` | Performance | Yes |
-| `docs` | Documentation | Yes |
-| `chore` | Maintenance | Hidden |
-| `refactor` | Refactoring | Hidden |
-| `test` | Tests | Hidden |
-| `ci` | CI/CD | Hidden |
 
 ## Code Review Tools
 
@@ -208,3 +244,23 @@ Both publish steps must succeed. If either fails, the workflow fails to prevent 
 | --------- | -------- | ------- | -------- |
 | npm | Weekly | 10 | Dev dependencies grouped by minor/patch |
 | GitHub Actions | Weekly | 5 | None |
+
+## Issue Reporting
+
+### Bug Reports
+
+Open a [GitHub issue](https://github.com/lekman/mmd/issues) with:
+
+- Steps to reproduce
+- Expected behaviour
+- Actual behaviour
+- Mermaid diagram content (if relevant)
+- Runtime version (`bun --version`)
+
+### Feature Requests
+
+Open a [GitHub issue](https://github.com/lekman/mmd/issues) describing the use case and proposed solution.
+
+## Security Issues
+
+Do not report security vulnerabilities through public GitHub issues. See [SECURITY.md](SECURITY.md) for the reporting process.

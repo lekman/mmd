@@ -264,7 +264,6 @@ All checks MUST pass before merge to `main`:
 | Document | Content |
 |----------|---------|
 | [Architecture](docs/ARCHITECTURE.md) | C4 diagrams, Clean Architecture layers, data flow |
-| [Maintainers](docs/MAINTAINERS.md) | Dev setup, task commands, CI/CD, release process |
+| [Contributing](docs/CONTRIBUTING.md) | Dev setup, task commands, CI/CD, release process, PR conventions |
 | [QA](docs/QA.md) | Test strategy, TDD workflow, coverage targets |
 | [Security](docs/SECURITY.md) | Vulnerability reporting, threat model |
-| [Contributing](CONTRIBUTING.md) | PR process, commit conventions |
