@@ -389,11 +389,11 @@ tasks:
         echo -e "${GREEN}✓${NC} All quality checks passed"
 
   run:
-    desc: "Run CLI from source (pass args after --)"
+    desc: "Run CLI from source (default: sync; pass args after --)"
     aliases: [r]
     silent: true
     cmds:
-      - bun run src/cli/index.ts {{.CLI_ARGS}}
+      - bun run src/cli/index.ts {{if .CLI_ARGS}}{{.CLI_ARGS}}{{else}}sync{{end}}
 
   test:config:
     desc: "Verify mmd config command (creates, skips, force-overwrites)"
