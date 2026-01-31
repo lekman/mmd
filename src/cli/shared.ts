@@ -8,6 +8,7 @@ import { isValidThemeConfig } from "../domain/types.ts";
 
 export const DEFAULT_CONFIG: ThemeConfig = {
   outputDir: "docs/mmd",
+  mode: "light",
   themes: {
     light: {
       theme: "base",
@@ -44,10 +45,11 @@ export const DEFAULT_CONFIG: ThemeConfig = {
   fallbackRenderer: "mmdc",
 };
 
+export const CONFIG_PATH = resolve(process.cwd(), ".mermaid.json");
+
 export function loadConfig(): ThemeConfig {
-  const configPath = resolve(process.cwd(), ".mermaid.json");
   try {
-    const raw = readFileSync(configPath, "utf-8");
+    const raw = readFileSync(CONFIG_PATH, "utf-8");
     const parsed = JSON.parse(raw);
     if (isValidThemeConfig(parsed)) return parsed;
     // biome-ignore lint/suspicious/noConsole: CLI output

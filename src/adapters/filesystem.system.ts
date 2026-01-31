@@ -38,4 +38,13 @@ export class NodeFileSystem implements IFileSystem {
     const { mkdir: fsMkdir } = await import("node:fs/promises");
     await fsMkdir(path, { recursive: true });
   }
+
+  async delete(path: string): Promise<void> {
+    const { unlink } = await import("node:fs/promises");
+    try {
+      await unlink(path);
+    } catch {
+      // ignore if file does not exist
+    }
+  }
 }

@@ -4,9 +4,17 @@ import { createFs } from "../shared.ts";
 
 export const checkCommand = new Command("check")
   .description("Lint: warn on inline Mermaid blocks in managed .md files")
-  .action(async () => {
+  .argument("[files...]", "Specific .md files to check (default: all **/*.md)")
+  .action(async (files: string[]) => {
     const fs = createFs();
-    const mdFiles = await fs.glob("**/*.md", process.cwd());
+
+    let mdFiles: string[];
+    if (files.length > 0) {
+      mdFiles = files;
+    } else {
+      mdFiles = await fs.glob("**/*.md", process.cwd());
+    }
+
     let totalWarnings = 0;
 
     for (const mdFile of mdFiles) {

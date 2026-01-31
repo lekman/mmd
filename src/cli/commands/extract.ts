@@ -4,11 +4,19 @@ import { createFs, loadConfig } from "../shared.ts";
 
 export const extractCommand = new Command("extract")
   .description("Scan .md files, extract Mermaid blocks to docs/mmd/*.mmd")
-  .action(async () => {
+  .argument("[files...]", "Specific .md files to scan (default: all **/*.md)")
+  .action(async (files: string[]) => {
     const config = loadConfig();
     const fs = createFs();
     const outputDir = config.outputDir ?? "docs/mmd";
-    const mdFiles = await fs.glob("**/*.md", process.cwd());
+
+    let mdFiles: string[];
+    if (files.length > 0) {
+      mdFiles = files;
+    } else {
+      mdFiles = await fs.glob("**/*.md", process.cwd());
+    }
+
     let total = 0;
 
     await fs.mkdir(outputDir);
