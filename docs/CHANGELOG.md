@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/lekman/mmd/compare/mmd-v1.1.0...mmd-v1.2.0) (2026-01-31)
+
+
+### Features
+
+* **ci:** add continuous deployment workflow for npm and GitHub Packages ([82ffe84](https://github.com/lekman/mmd/commit/82ffe841db97a8524e66c4e4b5de77f94471ed75))
+
 ## [1.1.0](https://github.com/lekman/mmd/compare/mmd-v1.0.0...mmd-v1.1.0) (2026-01-31)
 
 
