@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CLI tool (`@lekman/mmd`) that extracts inline Mermaid diagrams from Markdown, renders them to dual light/dark SVGs with shared theme configuration, and injects `<picture>` tags back into Markdown. Distributed via `bunx @lekman/mmd`.
+CLI tool (`@lekman/mmd`) that extracts inline Mermaid diagrams from Markdown, renders them to themed SVGs using a configurable light/dark mode, and injects standard markdown image tags back into Markdown. Distributed via `bunx @lekman/mmd`.
 
 ## Commands
 
@@ -18,7 +18,7 @@ task typecheck        # TypeScript type checking (alias: tc)
 task test             # Run tests with Bun (alias: t)
 task test:coverage    # Tests with coverage report (alias: cov)
 task quality          # Run all quality checks (alias: q)
-task run -- sync      # Run CLI from source (alias: r)
+task run              # Run CLI sync from source (alias: r)
 task build            # Build CLI bundle (alias: b)
 
 # Single test file
@@ -96,9 +96,9 @@ All external dependency interfaces live in `src/domain/interfaces.ts`:
 | Interface | Purpose | Implementations |
 |-----------|---------|-----------------|
 | `IRenderer` | Render `.mmd` content to SVG string | `BeautifulMermaidRenderer`, `MmdcRenderer` |
-| `IFileSystem` | Read/write files, check mtimes, glob | `NodeFileSystem` (prod), mock (test) |
+| `IFileSystem` | Read/write/delete files, check mtimes, glob | `NodeFileSystem` (prod), mock (test) |
 | `IExtractor` | Parse Markdown, extract Mermaid blocks | `RegexExtractor` |
-| `IInjector` | Replace anchors with `<picture>` tags | `PictureTagInjector` |
+| `IInjector` | Replace anchors with markdown image tags | `ImageTagInjector` |
 
 New external dependencies MUST be accessed through an interface in `domain/interfaces.ts`.
 
@@ -110,9 +110,10 @@ All shared types live in `src/domain/types.ts`:
 |------|---------|
 | `DiagramType` | Union of supported diagram types + `"unknown"` |
 | `MermaidBlock` | Extracted fenced block with content, source file, line range, name |
-| `ThemeConfig` | Parsed `.mermaid.json` with light/dark themes and renderer preference |
+| `ThemeMode` | Theme mode selection: `"light"` or `"dark"` |
+| `ThemeConfig` | Parsed `.mermaid.json` with mode, themes, and renderer preference |
 | `ThemeDef` | Theme definition for a single mode |
-| `RenderResult` | Output paths from rendering (source, light SVG, dark SVG) |
+| `RenderResult` | Output paths from rendering (source, SVG) |
 | `AnchorRef` | Parsed `<!-- mmd:name -->` comment with position |
 
 ### Adding a New CLI Command
@@ -218,8 +219,8 @@ Tests MUST use these shared mocks (or create inline mocks following the same pat
 | Service | Key scenarios |
 |---------|--------------|
 | extract | Find blocks, zero blocks, multiple blocks, name generation, anchor replacement |
-| render | Light/dark themes, mtime staleness skip, `--force`, fallback renderer routing |
-| inject | `<picture>` tag generation, relative paths, multiple anchors, no-op when no anchors |
+| render | Single-mode theme, mtime staleness skip (source + config), `--force`, fallback renderer routing, old file cleanup |
+| inject | Markdown image tag generation, relative paths, multiple anchors, no-op when no anchors, backward compat with old `<picture>` blocks |
 | sync | Pipeline order (extract → render → inject), `--force` passthrough |
 | check | Orphaned blocks in anchored files, ignore unmanaged files |
 | init | AI tool detection, path resolution, `--force`, `--global` scope limits |

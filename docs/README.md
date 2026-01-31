@@ -6,14 +6,14 @@ Extract, render, and inject themed SVGs into Markdown.
 
 ## Overview
 
-`@lekman/mmd` eliminates manual Mermaid theming hacks across repositories. It extracts inline Mermaid diagram blocks from Markdown files, renders them to dual light/dark SVG variants using a shared theme configuration, and injects `<picture>` tags with `prefers-color-scheme` media queries back into the Markdown. The result is diagrams that render correctly on GitHub in both dark and light mode.
+`@lekman/mmd` eliminates manual Mermaid theming hacks across repositories. It extracts inline Mermaid diagram blocks from Markdown files, renders them to themed SVGs using a configurable light/dark mode, and injects standard markdown image tags back into the Markdown. The result is diagrams that render correctly on GitHub and in VS Code.
 
 ## Features
 
 - Extract inline Mermaid blocks from `.md` files into standalone `.mmd` files
-- Render `.mmd` files to `*.light.svg` and `*.dark.svg` using shared theme config
-- Inject `<picture>` tags with `prefers-color-scheme` media queries into Markdown
-- Timestamp-based staleness checking — only re-renders changed diagrams
+- Render `.mmd` files to `*.svg` using configurable light or dark theme
+- Inject standard markdown image tags (`![alt](path)`) into Markdown
+- Timestamp-based staleness checking — re-renders when `.mmd` or `.mermaid.json` changes
 - Dual renderer: [beautiful-mermaid](https://github.com/lukilabs/beautiful-mermaid) for supported types, [mermaid-cli](https://github.com/mermaid-js/mermaid-cli) fallback for the rest
 - AI coding assistant rule files for Claude Code, Cursor, and GitHub Copilot
 - Supports 15 Mermaid diagram types: flowchart, sequence, class, state, ER, C4, gantt, pie, gitgraph, mindmap, timeline, quadrant, kanban, requirement, architecture
@@ -23,6 +23,9 @@ Extract, render, and inject themed SVGs into Markdown.
 Requires [Bun](https://bun.sh/) runtime.
 
 ```bash
+# Install base mermaid-cli renderer
+bun install -g @mermaid-js/mermaid-cli
+
 # Run directly (no install needed)
 bunx @lekman/mmd sync
 
@@ -49,15 +52,11 @@ bun add -g @lekman/mmd
     bunx @lekman/mmd sync
     ```
 
-3. The tool extracts the block to `docs/mmd/<name>.mmd`, renders light and dark SVGs, and replaces the fenced block with a `<picture>` tag:
+3. The tool extracts the block to `docs/mmd/<name>.mmd`, renders a themed SVG, and replaces the fenced block with a markdown image:
 
-    ```html
+    ```markdown
     <!-- mmd:architecture-0 -->
-    <picture>
-      <source media="(prefers-color-scheme: dark)" srcset="mmd/architecture-0.dark.svg">
-      <source media="(prefers-color-scheme: light)" srcset="mmd/architecture-0.light.svg">
-      <img alt="architecture-0" src="mmd/architecture-0.light.svg">
-    </picture>
+    ![Architecture 0](docs/mmd/architecture-0.svg)
     ```
 
 4. Commit both the `.mmd` source files and the generated `.svg` files.
@@ -66,11 +65,11 @@ bun add -g @lekman/mmd
 
 | Command | Description | Flags |
 | ------- | ----------- | ----- |
-| `mmd extract` | Scan `.md` files, extract Mermaid blocks to `docs/mmd/*.mmd` | |
-| `mmd render` | Render stale `docs/mmd/*.mmd` to `*.light.svg` + `*.dark.svg` | `--force` re-render all |
-| `mmd inject` | Replace anchor comments in `.md` files with `<picture>` image refs | |
-| `mmd sync` | Run extract + render + inject in sequence | `--force` re-render all |
-| `mmd check` | Lint: warn on inline Mermaid blocks in managed `.md` files | |
+| `mmd extract [files...]` | Scan `.md` files, extract Mermaid blocks to `docs/mmd/*.mmd` | |
+| `mmd render [files...]` | Render stale `docs/mmd/*.mmd` to `*.svg` | `--force` re-render all |
+| `mmd inject [files...]` | Replace anchor comments in `.md` files with markdown image refs | |
+| `mmd sync [files...]` | Run extract + render + inject in sequence | `--force` re-render all |
+| `mmd check [files...]` | Lint: warn on inline Mermaid blocks in managed `.md` files | |
 | `mmd config` | Write default `.mermaid.json` to the repository root | `--force` overwrite existing |
 | `mmd init` | Install AI coding assistant rule files | `--global`, `--all`, `--claude`, `--cursor`, `--copilot`, `--force` |
 
@@ -81,6 +80,7 @@ Create a `.mermaid.json` file in your repository root. This defines the output d
 ```json
 {
   "outputDir": "docs/mmd",
+  "mode": "light",
   "themes": {
     "light": {
       "theme": "base",
@@ -123,8 +123,9 @@ The default themes match GitHub's light and dark color palettes.
 | Field | Type | Description |
 | ----- | ---- | ----------- |
 | `outputDir` | `string` | Directory for `.mmd` source files and generated SVGs |
-| `themes.light` | `ThemeDef` | Mermaid theme config applied to light SVGs |
-| `themes.dark` | `ThemeDef` | Mermaid theme config applied to dark SVGs |
+| `mode` | `"light"` \| `"dark"` | Which theme to use for rendering (default: `"light"`) |
+| `themes.light` | `ThemeDef` | Mermaid theme config for light mode |
+| `themes.dark` | `ThemeDef` | Mermaid theme config for dark mode |
 | `renderer` | `string` | Primary renderer (`beautiful-mermaid`) |
 | `fallbackRenderer` | `string` | Fallback for unsupported diagram types (`mmdc`) |
 
@@ -137,16 +138,16 @@ The tool supports two editing workflows:
 ```
 Edit .md file → add ```mermaid block → mmd sync
   1. Extract: fenced block → docs/mmd/<name>.mmd
-  2. Render:  .mmd → .light.svg + .dark.svg
-  3. Inject:  replace fenced block with <!-- mmd:name --> + <picture> tag
+  2. Render:  .mmd → .svg (using selected theme mode)
+  3. Inject:  replace fenced block with <!-- mmd:name --> + ![alt](path)
 ```
 
 ### Editing an existing `.mmd` file directly
 
 ```
 Edit docs/mmd/<name>.mmd → mmd render (or mmd sync)
-  Compare .mmd mtime vs .svg mtime
-  If .mmd is newer → re-render light + dark SVGs
+  Compare max(.mmd mtime, .mermaid.json mtime) vs .svg mtime
+  If source is newer → re-render SVG with selected theme
   If .svg is newer → skip (already up to date)
 ```
 
@@ -158,8 +159,8 @@ The primary renderer is beautiful-mermaid (zero-DOM, TypeScript-native). Diagram
 
 | Renderer | Diagram Types |
 | -------- | ------------- |
-| beautiful-mermaid | flowchart, sequence, class, state, ER |
-| mmdc (fallback) | C4, gantt, pie, gitgraph, mindmap, timeline, quadrant, kanban, requirement, architecture |
+| beautiful-mermaid | flowchart, state |
+| mmdc (fallback) | sequence, class, ER, C4, gantt, pie, gitgraph, mindmap, timeline, quadrant, kanban, requirement, architecture |
 
 Diagram type is detected by parsing the first non-comment line of the `.mmd` file.
 
@@ -186,11 +187,10 @@ mmd init --force      # Overwrite existing rule files
 repo/
   .mermaid.json                    # Theme configuration
   docs/
-    ARCHITECTURE.md                # Contains <!-- mmd:xxx --> anchors + <picture> tags
+    ARCHITECTURE.md                # Contains <!-- mmd:xxx --> anchors + image refs
     mmd/
       system-context.mmd           # Source diagram
-      system-context.light.svg     # Light theme SVG
-      system-context.dark.svg      # Dark theme SVG
+      system-context.svg           # Rendered SVG (themed per config mode)
 ```
 
 ## Examples

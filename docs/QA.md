@@ -147,18 +147,19 @@ task quality
 
 ### Render Service
 
-- Applies light theme and generates `*.light.svg`
-- Applies dark theme and generates `*.dark.svg`
-- Skips up-to-date SVGs (mtime comparison)
+- Renders single `*.svg` using selected theme mode (light or dark)
+- Skips up-to-date SVGs (mtime comparison on `.mmd` and `.mermaid.json`)
 - Re-renders all with `--force`
+- Re-renders when config changes (mode switch, theme edits)
 - Falls back to mmdc for unsupported diagram types
-- Reads theme config from `.mermaid.json`
+- Cleans up old `*.light.svg` / `*.dark.svg` files
 
 ### Inject Service
 
-- Generates valid `<picture>` tags with `prefers-color-scheme` media queries
-- Computes relative `srcset` paths from the `.md` file to the SVG files
+- Generates standard markdown image tags: `![Alt](path/name.svg)`
+- Computes relative paths from the `.md` file to the SVG
 - Handles nested directory structures
+- Replaces old `<picture>` blocks on next inject/sync
 - Leaves files unchanged when no anchors exist
 
 ### Sync Service

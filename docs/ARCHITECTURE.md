@@ -17,7 +17,7 @@ C4Context
 
     System(mmd, "@lekman/mmd", "CLI tool: extract, render, inject Mermaid SVGs")
 
-    System_Ext(github, "GitHub", "Renders <picture> tags with prefers-color-scheme")
+    System_Ext(github, "GitHub", "Renders markdown image tags in README and docs")
     System_Ext(vscode, "VS Code", "Mermaid Chart extension for live preview")
 
     Rel(dev, mmd, "bunx @lekman/mmd sync")
@@ -105,7 +105,7 @@ src/
   services/
     extract.ts            # Extract mermaid blocks from markdown
     render.ts             # Render .mmd files to SVG
-    inject.ts             # Inject <picture> tags into markdown
+    inject.ts             # Inject markdown image tags into markdown
     sync.ts               # Orchestrate extract → render → inject
     check.ts              # Lint for orphaned inline blocks
     init.ts               # Install AI skill files
@@ -135,7 +135,7 @@ Files with external I/O use the `*.system.ts` suffix. These files are excluded f
 
 ## Rendering Pipeline
 
-The render service processes each `.mmd` file through a dual-theme pipeline:
+The render service processes each `.mmd` file using the configured theme mode:
 
 <div style="background: white; background-color: white; padding: 0px; border: 1px solid #ccc; border-radius: 10px;">
 
@@ -150,27 +150,23 @@ sequenceDiagram
     participant MMDC as mmdc (fallback)
     participant FS as FileSystem
 
-    CLI->>Svc: renderDiagrams(config, deps)
-    Svc->>Cfg: Read theme config
+    CLI->>Svc: renderDiagrams(config, options)
+    Svc->>Cfg: Read theme config (mode + theme)
     loop Each .mmd file
         Svc->>FS: Read .mmd content
-        Svc->>FS: Check mtime (.mmd vs .svg)
-        alt .mmd is newer or --force
+        Svc->>FS: Check mtime (.mmd and .mermaid.json vs .svg)
+        alt Source or config is newer, or --force
             Svc->>Det: detectDiagramType(content)
             Det-->>Svc: DiagramType
             alt Supported by beautiful-mermaid
-                Svc->>BM: render(content + light theme)
-                BM-->>Svc: SVG string
-                Svc->>BM: render(content + dark theme)
+                Svc->>BM: render(content + selected theme)
                 BM-->>Svc: SVG string
             else Fallback to mmdc
-                Svc->>MMDC: render(content + light theme)
-                MMDC-->>Svc: SVG string
-                Svc->>MMDC: render(content + dark theme)
+                Svc->>MMDC: render(content + selected theme)
                 MMDC-->>Svc: SVG string
             end
-            Svc->>FS: Write .light.svg
-            Svc->>FS: Write .dark.svg
+            Svc->>FS: Write .svg
+            Svc->>FS: Delete old .light.svg / .dark.svg (if exist)
         else Up to date
             Note over Svc: Skip rendering
         end
@@ -182,13 +178,13 @@ sequenceDiagram
 
 ### Rendering Steps
 
-1. Read `.mermaid.json` from the repository root
+1. Read `.mermaid.json` from the repository root (get `mode` and theme)
 2. For each `.mmd` file in `outputDir`:
-   - Compare `.mmd` mtime against `.svg` mtime (skip if up to date)
+   - Compare `max(.mmd mtime, .mermaid.json mtime)` against `.svg` mtime (skip if up to date)
    - Detect diagram type from the first non-comment line
    - Select renderer: beautiful-mermaid for supported types, mmdc for others
-   - Prepend light theme as `%%{init: ...}%%`, render to `<name>.light.svg`
-   - Prepend dark theme as `%%{init: ...}%%`, render to `<name>.dark.svg`
+   - Prepend selected theme as `%%{init: ...}%%`, render to `<name>.svg`
+   - Delete old `<name>.light.svg` / `<name>.dark.svg` if they exist
 
 ## Technology Stack
 
@@ -233,9 +229,9 @@ sequenceDiagram
   │
   ├─ For each anchor:
   │   ├─ Compute relative path from .md to SVGs
-  │   └─ Generate <picture> tag with prefers-color-scheme sources
+  │   └─ Generate markdown image tag: ![Name](path/name.svg)
   │
-  └─ Updated .md files with <picture> tags
+  └─ Updated .md files with markdown image tags
 ```
 
 ### Sync Flow
@@ -244,8 +240,8 @@ sequenceDiagram
 mmd sync [--force]
   │
   ├─ 1. Extract: .md → .mmd files + anchor comments
-  ├─ 2. Render:  .mmd → .light.svg + .dark.svg
-  └─ 3. Inject:  anchors → <picture> tags
+  ├─ 2. Render:  .mmd → .svg (using selected theme mode)
+  └─ 3. Inject:  anchors → ![alt](path) markdown images
 ```
 
 ## Interface Boundaries
@@ -255,7 +251,7 @@ mmd sync [--force]
 | `IRenderer` | `domain/interfaces.ts` | Render `.mmd` content to SVG string | `BeautifulMermaidRenderer`, `MmdcRenderer` |
 | `IFileSystem` | `domain/interfaces.ts` | Read/write files, check mtimes, glob | `NodeFileSystem` (production), mock (test) |
 | `IExtractor` | `domain/interfaces.ts` | Parse Markdown and extract Mermaid blocks | `RegexExtractor` |
-| `IInjector` | `domain/interfaces.ts` | Replace anchors with `<picture>` tags | `PictureTagInjector` |
+| `IInjector` | `domain/interfaces.ts` | Replace anchors with markdown image tags | `ImageTagInjector` |
 
 ### Dependency Injection
 

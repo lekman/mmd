@@ -9,15 +9,17 @@ applyTo: "**/*.mmd,**/*.md,docs/**"
 - Edit `.mmd` files in `docs/mmd/`, not inline Mermaid in Markdown
 - Run `mmd sync` after editing to generate themed SVGs and update Markdown
 - `mmd extract` — extract fenced Mermaid blocks from `.md` to `docs/mmd/*.mmd`
-- `mmd render` — render `.mmd` to dual light/dark SVGs via `.mermaid.json` config
+- `mmd render` — render `.mmd` to SVGs via `.mermaid.json` config
 - `mmd render --force` — re-render all regardless of timestamps
-- `mmd inject` — replace `<!-- mmd:name -->` anchors with `<picture>` tags
+- `mmd inject` — replace `<!-- mmd:name -->` anchors with markdown image refs
 - `mmd sync` — run extract + render + inject in sequence
+- `mmd sync [files...]` — process specific `.md` files instead of all
 - `mmd check` — lint for orphaned inline Mermaid blocks
-- Config: `.mermaid.json` at repo root (light/dark themes, output dir)
+- `mmd config` — write default `.mermaid.json` to the repository root
+- Config: `.mermaid.json` at repo root (mode, themes, output dir)
 - Anchors: `<!-- mmd:name -->` comments link Markdown to diagrams
-- Render skips up-to-date files (mtime comparison); use `--force` to override
-- Renderers: beautiful-mermaid (flowchart, state, sequence, class, ER), mmdc fallback (all other types)
+- Render skips up-to-date files (mtime comparison on `.mmd` and `.mermaid.json`); use `--force` to override
+- Renderers: beautiful-mermaid (flowchart, state), mmdc fallback (all other types)
 
 ## Syntax Best Practices
 
@@ -50,7 +52,7 @@ applyTo: "**/*.mmd,**/*.md,docs/**"
 ## Authoring Rules
 
 - Write `.mmd` files, never inline Mermaid in Markdown
-- Do not edit generated SVGs or `<picture>` tags
+- Do not edit generated SVGs or markdown image tags
 - Do not add `%%{init}` theme directives -- the tool handles theming
 - One concept per diagram
 - Commit both `.mmd` source and generated `.svg` files
@@ -60,19 +62,14 @@ applyTo: "**/*.mmd,**/*.md,docs/**"
 ## File Structure
 
 ```
-.mermaid.json           # Theme config
+.mermaid.json           # Theme config (mode, themes, output dir)
 docs/mmd/*.mmd          # Source diagrams
-docs/mmd/*.light.svg    # Generated light theme SVG
-docs/mmd/*.dark.svg     # Generated dark theme SVG
+docs/mmd/*.svg          # Rendered SVGs (themed per config mode)
 ```
 
 ## Output Format
 
-```html
+```markdown
 <!-- mmd:name -->
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="docs/mmd/name.dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="docs/mmd/name.light.svg">
-  <img alt="Name" src="docs/mmd/name.light.svg">
-</picture>
+![Name](docs/mmd/name.svg)
 ```

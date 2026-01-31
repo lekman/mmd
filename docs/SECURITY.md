@@ -110,8 +110,8 @@ The tool reads and writes files in two scopes:
 | Extract | `**/*.md` | Read + write (replace blocks with anchors) |
 | Extract | `<outputDir>/*.mmd` | Write |
 | Render | `<outputDir>/*.mmd` | Read |
-| Render | `<outputDir>/*.light.svg`, `*.dark.svg` | Write |
-| Inject | `**/*.md` | Read + write (inject `<picture>` tags) |
+| Render | `<outputDir>/*.svg` | Write |
+| Inject | `**/*.md` | Read + write (inject markdown image tags) |
 | Check | `**/*.md` | Read |
 | Init | AI tool config directories | Write |
 
@@ -121,7 +121,7 @@ The tool reads and writes files in two scopes:
 | --------- | ----- | --------- |
 | Init | `~/.claude/skills/mermaid/SKILL.md` | Write |
 
-Path traversal is prevented by restricting output to the configured `outputDir` and using relative paths for `srcset` values in `<picture>` tags.
+Path traversal is prevented by restricting output to the configured `outputDir` and using relative paths in markdown image tags.
 
 ## Secrets Management
 
