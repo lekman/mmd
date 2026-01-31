@@ -66,6 +66,8 @@ All development commands use [Task](https://taskfile.dev/) with Bun as the runti
 | `task test` | `t` | Run unit tests with Bun |
 | `task test:coverage` | `cov` | Tests with coverage report |
 | `task quality` | `q` | Run lint + typecheck + test |
+| `task run` | `r` | Run CLI from source (e.g. `task run -- sync --force`) |
+| `task test:config` | | Verify `mmd config` command (create, skip, force) |
 | `task build` | `b` | Build CLI bundle |
 
 Additional commands are available via `@northbridge-security/ai-toolkit`:

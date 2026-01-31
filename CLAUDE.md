@@ -18,6 +18,7 @@ task typecheck        # TypeScript type checking (alias: tc)
 task test             # Run tests with Bun (alias: t)
 task test:coverage    # Tests with coverage report (alias: cov)
 task quality          # Run all quality checks (alias: q)
+task run -- sync      # Run CLI from source (alias: r)
 task build            # Build CLI bundle (alias: b)
 
 # Single test file

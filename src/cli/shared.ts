@@ -6,7 +6,7 @@ import { MmdcRenderer } from "../adapters/mmdc-renderer.system.ts";
 import type { ThemeConfig } from "../domain/types.ts";
 import { isValidThemeConfig } from "../domain/types.ts";
 
-const DEFAULT_CONFIG: ThemeConfig = {
+export const DEFAULT_CONFIG: ThemeConfig = {
   outputDir: "docs/mmd",
   themes: {
     light: {

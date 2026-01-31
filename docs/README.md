@@ -71,6 +71,7 @@ bun add -g @lekman/mmd
 | `mmd inject` | Replace anchor comments in `.md` files with `<picture>` image refs | |
 | `mmd sync` | Run extract + render + inject in sequence | `--force` re-render all |
 | `mmd check` | Lint: warn on inline Mermaid blocks in managed `.md` files | |
+| `mmd config` | Write default `.mermaid.json` to the repository root | `--force` overwrite existing |
 | `mmd init` | Install AI coding assistant rule files | `--global`, `--all`, `--claude`, `--cursor`, `--copilot`, `--force` |
 
 ## Configuration

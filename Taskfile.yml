@@ -285,6 +285,7 @@ tasks:
         echo -e "  ${GREEN}task test${NC}                        ${YELLOW}t${NC}         Run tests"
         echo -e "  ${GREEN}task test:coverage${NC}               ${YELLOW}cov${NC}       Run tests with coverage report"
         echo -e "  ${GREEN}task quality${NC}                     ${YELLOW}q${NC}         Run all quality checks"
+        echo -e "  ${GREEN}task run${NC}                         ${YELLOW}r${NC}         Run CLI from source"
         echo -e "  ${GREEN}task build${NC}                       ${YELLOW}b${NC}         Bundle CLI for distribution"
         echo ""
         echo -e "${BOLD}Security:${NC}"
@@ -386,6 +387,82 @@ tasks:
 
         echo ""
         echo -e "${GREEN}✓${NC} All quality checks passed"
+
+  run:
+    desc: "Run CLI from source (pass args after --)"
+    aliases: [r]
+    silent: true
+    cmds:
+      - bun run src/cli/index.ts {{.CLI_ARGS}}
+
+  test:config:
+    desc: "Verify mmd config command (creates, skips, force-overwrites)"
+    silent: true
+    cmds:
+      - |
+        set -euo pipefail
+
+        GREEN='\033[0;32m'
+        RED='\033[0;31m'
+        NC='\033[0m'
+        PASS=0
+        FAIL=0
+
+        REPO_ROOT=$(git rev-parse --show-toplevel)
+        CONFIG="$REPO_ROOT/.mermaid.json"
+        BACKUP=""
+
+        # Back up existing config
+        if [ -f "$CONFIG" ]; then
+          BACKUP=$(mktemp)
+          cp "$CONFIG" "$BACKUP"
+          rm "$CONFIG"
+        fi
+
+        cleanup() {
+          if [ -n "$BACKUP" ] && [ -f "$BACKUP" ]; then
+            cp "$BACKUP" "$CONFIG"
+            rm "$BACKUP"
+          elif [ -z "$BACKUP" ]; then
+            rm -f "$CONFIG"
+          fi
+        }
+        trap cleanup EXIT
+
+        # Test 1: Creates config when missing
+        bun run src/cli/index.ts config > /dev/null 2>&1
+        if [ -f "$CONFIG" ] && grep -q '"outputDir"' "$CONFIG"; then
+          echo -e "  ${GREEN}✓${NC} Creates .mermaid.json when missing"
+          PASS=$((PASS + 1))
+        else
+          echo -e "  ${RED}✗${NC} Failed to create .mermaid.json"
+          FAIL=$((FAIL + 1))
+        fi
+
+        # Test 2: Skips when already exists
+        OUTPUT=$(bun run src/cli/index.ts config 2>&1)
+        if echo "$OUTPUT" | grep -q "already exists"; then
+          echo -e "  ${GREEN}✓${NC} Skips when .mermaid.json exists"
+          PASS=$((PASS + 1))
+        else
+          echo -e "  ${RED}✗${NC} Did not skip existing .mermaid.json"
+          FAIL=$((FAIL + 1))
+        fi
+
+        # Test 3: Overwrites with --force
+        echo '{}' > "$CONFIG"
+        bun run src/cli/index.ts config --force > /dev/null 2>&1
+        if grep -q '"outputDir"' "$CONFIG"; then
+          echo -e "  ${GREEN}✓${NC} Overwrites with --force"
+          PASS=$((PASS + 1))
+        else
+          echo -e "  ${RED}✗${NC} Failed to overwrite with --force"
+          FAIL=$((FAIL + 1))
+        fi
+
+        echo ""
+        echo -e "  ${GREEN}${PASS} passed${NC}, ${RED}${FAIL} failed${NC}"
+        [ "$FAIL" -eq 0 ] || exit 1
 
   build:
     desc: "Bundle CLI for distribution"
