@@ -1,6 +1,6 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository. It is also used by the automated code review workflow (`claude-code-review.yml`).
 
 ## Project Overview
 
@@ -11,10 +11,7 @@ CLI tool (`@lekman/mmd`) that extracts inline Mermaid diagrams from Markdown, re
 All commands use [Task](https://taskfile.dev) (`task`) with Bun as the runtime.
 
 ```bash
-# Setup
 task install          # Install all tools and dependencies (alias: i)
-
-# Development
 task lint             # Run Biome linting (alias: l)
 task format           # Format code with Biome (alias: fmt)
 task typecheck        # TypeScript type checking (alias: tc)
@@ -29,71 +26,147 @@ bun test tests/unit/services/extract.test.ts
 
 Pre-commit hooks run `lint` and `typecheck` automatically.
 
-## Architecture
+Additional task commands via `@northbridge-security/ai-toolkit`:
+- `task git:<command>` — Git operations
+- `task json:<command>` — JSON validation
+- `task yaml:<command>` — YAML validation
+- `task markdown:<command>` — Markdown validation
+- `task security:<command>` — Security tools (Semgrep)
 
-This project follows **Clean Architecture** principles for testability and maintainability.
+## Architecture Rules
 
-### Directory Structure
+This project follows Clean Architecture. These rules are enforced in code review.
+
+### Layer Boundaries
 
 ```
 src/
-  domain/             # Business entities, interfaces (inner layer)
-  services/           # Application services, use cases
-  adapters/           # Renderer and filesystem adapters
-  cli/                # Commander CLI entry point and commands
-  templates/          # AI skill template files (claude, cursor, copilot)
-tests/
-  unit/               # Unit tests (mock external dependencies)
-  mocks/              # Mock implementations (mock-fs.ts, mock-renderer.ts)
-examples/             # Example .mmd files for all diagram types
-docs/
-  requirements/       # PRD documents
+  domain/       → MUST NOT import from services/, adapters/, cli/
+  services/     → MAY import from domain/ only, MUST NOT import from adapters/ or cli/
+  adapters/     → MAY import from domain/ only (implements interfaces)
+  cli/          → MAY import from services/ and adapters/ (wiring layer)
 ```
 
-**Stack**: Bun runtime, TypeScript (strict mode), Biome (linting/formatting), Husky (pre-commit), Semgrep (security)
+Violations of this dependency rule must be rejected in review.
 
-### Clean Architecture Principles
+### File Placement Rules
 
-1. **Dependency Rule**: Dependencies point inward. Business logic never depends on infrastructure.
+| New code type | Location | Test location |
+|---------------|----------|---------------|
+| Type, interface, validation, enum | `src/domain/` | `tests/unit/domain/` |
+| Business logic, orchestration | `src/services/` | `tests/unit/services/` |
+| External I/O (fs, renderer, network) | `src/adapters/*.system.ts` | Excluded from coverage |
+| CLI command | `src/cli/commands/` | Excluded from coverage |
+| Shared CLI wiring (factories) | `src/cli/shared.ts` | N/A |
+| AI skill template | `src/templates/` | N/A |
+| Mock implementation | `tests/mocks/` | N/A |
 
-2. **Interface-Based Boundaries**: External dependencies accessed through interfaces:
+### System File Convention
+
+Files with external I/O MUST use the `*.system.ts` suffix. These are excluded from coverage in `bunfig.toml`. Current system files:
+
+- `adapters/beautiful-mermaid-renderer.system.ts` — beautiful-mermaid API
+- `adapters/mmdc-renderer.system.ts` — mermaid-cli subprocess
+- `adapters/filesystem.system.ts` — Node.js file operations
+
+### Dependency Injection Pattern
+
+Services MUST accept dependencies through an options/deps object for testability. Do not instantiate adapters inside service functions.
+
+```typescript
+// Correct: dependencies injected
+export async function renderDiagrams(
+  config: ThemeConfig,
+  options: RenderOptions   // contains renderer, fallbackRenderer, fs, mmdFiles, force
+): Promise<RenderResult[]> { ... }
+
+// Wrong: adapter instantiated inside service
+export async function renderDiagrams(config: ThemeConfig) {
+  const renderer = new BeautifulMermaidRenderer(); // VIOLATION
+}
+```
+
+Production wiring happens in `src/cli/shared.ts` via factory functions (`createFs()`, `createRenderer()`, `createFallbackRenderer()`).
+
+### Interface Definitions
+
+All external dependency interfaces live in `src/domain/interfaces.ts`:
+
+| Interface | Purpose | Implementations |
+|-----------|---------|-----------------|
+| `IRenderer` | Render `.mmd` content to SVG string | `BeautifulMermaidRenderer`, `MmdcRenderer` |
+| `IFileSystem` | Read/write files, check mtimes, glob | `NodeFileSystem` (prod), mock (test) |
+| `IExtractor` | Parse Markdown, extract Mermaid blocks | `RegexExtractor` |
+| `IInjector` | Replace anchors with `<picture>` tags | `PictureTagInjector` |
+
+New external dependencies MUST be accessed through an interface in `domain/interfaces.ts`.
+
+### Domain Types
+
+All shared types live in `src/domain/types.ts`:
+
+| Type | Purpose |
+|------|---------|
+| `DiagramType` | Union of supported diagram types + `"unknown"` |
+| `MermaidBlock` | Extracted fenced block with content, source file, line range, name |
+| `ThemeConfig` | Parsed `.mermaid.json` with light/dark themes and renderer preference |
+| `ThemeDef` | Theme definition for a single mode |
+| `RenderResult` | Output paths from rendering (source, light SVG, dark SVG) |
+| `AnchorRef` | Parsed `<!-- mmd:name -->` comment with position |
+
+### Adding a New CLI Command
+
+1. Create `src/cli/commands/<name>.ts` with a `Command` export
+2. Register it in `src/cli/index.ts` via `program.addCommand()`
+3. Use `createFs()`, `createRenderer()`, etc. from `shared.ts` for adapter wiring
+4. Service logic MUST NOT live in the command file — delegate to `src/services/`
+5. `console.log`/`console.warn` in CLI commands requires the biome-ignore comment:
    ```typescript
-   // Define interface in domain/
-   interface IRenderer {
-     readonly supportedTypes: ReadonlySet<DiagramType>;
-     render(content: string): Promise<string>;
-   }
-
-   // Implement in adapters/
-   class BeautifulMermaidRenderer implements IRenderer { ... }
+   // biome-ignore lint/suspicious/noConsole: CLI output
+   console.log(`  extracted: ${mmdPath}`);
    ```
 
-3. **Dependency Injection**: Use optional `deps` parameter for testability:
-   ```typescript
-   export async function renderDiagrams(config: ThemeConfig, deps?: {
-     renderer?: IRenderer;
-     fs?: IFileSystem;
-   }) { ... }
-   ```
+## Code Style Rules
 
-4. **System File Convention**: Files with external I/O use `*.system.ts` suffix and are excluded from coverage:
-   - `beautiful-mermaid-renderer.system.ts` - beautiful-mermaid API
-   - `mmdc-renderer.system.ts` - mermaid-cli subprocess
-   - `filesystem.system.ts` - Node.js file operations
+Biome enforces formatting and linting (configured in `biome.json`). These rules are non-negotiable:
 
-5. **Testability**: Business logic is fully unit-testable with mocks.
-
-## Code Style
-
-- Biome handles formatting and linting (configured in `biome.json`)
 - Double quotes, semicolons, ES5 trailing commas
 - 100 character line width, 2-space indentation
-- Imports organized automatically
-- No `console.log` in production code (enforced by semgrep)
+- Imports organized automatically by Biome
+- `noUnusedVariables`: error
+- `noExplicitAny`: warn (off in tests)
+- `noConsole`: warn (off in tests)
+- `noNonNullAssertion`: off in tests only
 
-## Testing
+### Console Output
 
-This project uses **Test-Driven Development (TDD)** with Bun's built-in test runner.
+- `console.log` is forbidden in `src/` (enforced by Semgrep and Biome)
+- Exception: `src/cli/**` may use `console.log` with the biome-ignore directive
+- Tests may use `console.log` freely
+
+### Export Patterns
+
+- Service functions are exported as named functions, not classes
+- Domain types use `export type` or `export interface`
+- Constants use `export const` with `ReadonlySet`, `ReadonlyArray` where applicable
+- CLI commands export a `Command` instance (e.g., `export const extractCommand`)
+
+### Naming Conventions
+
+| Item | Convention | Example |
+|------|-----------|---------|
+| Files | kebab-case | `beautiful-mermaid-renderer.system.ts` |
+| Interfaces | `I` prefix + PascalCase | `IRenderer`, `IFileSystem` |
+| Types | PascalCase | `DiagramType`, `ThemeConfig` |
+| Functions | camelCase | `extractMermaidBlocks`, `renderDiagrams` |
+| Constants | UPPER_SNAKE_CASE | `BEAUTIFUL_MERMAID_TYPES`, `DIAGRAM_PATTERNS` |
+| Regex constants | UPPER_SNAKE_CASE + `_RE` suffix | `ANCHOR_RE`, `MERMAID_FENCE_RE` |
+| Options types | PascalCase + `Options` | `RenderOptions`, `SyncOptions` |
+| Result types | PascalCase + `Result` | `RenderResult`, `SyncResult` |
+
+## Testing Rules
+
+This project uses Test-Driven Development (TDD) with Bun's built-in test runner.
 
 ### TDD Workflow
 
@@ -103,31 +176,95 @@ Follow the **Red -> Green -> Refactor** cycle:
 2. **GREEN**: Write minimal code to pass the test
 3. **REFACTOR**: Improve code while keeping tests green
 
-### Test Organization
+Every new service function or domain function MUST have a corresponding test file.
 
-| Location | Purpose | Speed |
-|----------|---------|-------|
-| `tests/unit/` | Business logic with mocks | < 10ms |
-| `tests/mocks/` | Mock implementations | N/A |
+### Coverage Thresholds
 
-### Coverage Targets
+Enforced in `bunfig.toml` — CI fails if these drop:
 
-| Code Type | Target |
-|-----------|--------|
-| Business logic | 80%+ |
-| Validation | 100% |
-| System files (`*.system.ts`) | Excluded |
-| CLI commands (`src/cli/**`) | Excluded |
+| Metric | Threshold |
+|--------|-----------|
+| Line | 80% |
+| Statement | 80% |
+| Function | 60% |
 
-## CI Pipeline
+Coverage exclusions:
+- `src/cli/**` — argument parsing
+- `**/*.system.ts` — external I/O
+- `src/services/init.ts` — initialization/setup logic
+- `tests/**` — test files
 
-GitHub Actions runs on PRs to `main`: lint, typecheck, test (with coverage), security scan. All must pass for merge (quality gate). Release-please automates versioning from conventional commits.
+### Test File Rules
 
-## Task Libraries
+- Test files MUST mirror the source path: `src/services/extract.ts` → `tests/unit/services/extract.test.ts`
+- Tests MUST use mocks for `IRenderer` and `IFileSystem` — no real filesystem or renderer calls
+- Tests MUST NOT make network calls or spawn subprocesses
+- Use `describe()` blocks to group related tests
+- Use `test()` (not `it()`) for individual test cases
+- Import from `bun:test`: `describe`, `expect`, `test`, `beforeEach`, `mock`
 
-Additional task commands available via `@northbridge-security/ai-toolkit`:
-- `task git:<command>` - Git operations
-- `task json:<command>` - JSON validation
-- `task yaml:<command>` - YAML validation (alias: yml)
-- `task markdown:<command>` - Markdown validation (alias: md)
-- `task security:<command>` - Security tools (alias: s)
+### Mock Implementations
+
+Shared mocks live in `tests/mocks/`:
+
+- `mock-fs.ts` — in-memory `IFileSystem` with a `Map<string, string>` backing store
+- `mock-renderer.ts` — returns fixed SVG strings, tracks calls
+
+Tests MUST use these shared mocks (or create inline mocks following the same pattern). Do not use real adapters in unit tests.
+
+### What to Test
+
+| Service | Key scenarios |
+|---------|--------------|
+| extract | Find blocks, zero blocks, multiple blocks, name generation, anchor replacement |
+| render | Light/dark themes, mtime staleness skip, `--force`, fallback renderer routing |
+| inject | `<picture>` tag generation, relative paths, multiple anchors, no-op when no anchors |
+| sync | Pipeline order (extract → render → inject), `--force` passthrough |
+| check | Orphaned blocks in anchored files, ignore unmanaged files |
+| init | AI tool detection, path resolution, `--force`, `--global` scope limits |
+
+## Security Rules
+
+- No secrets, API keys, or credentials in source code (enforced by Semgrep: `no-secrets-in-code`, `no-hardcoded-credentials`)
+- No `console.log` in production code outside `src/cli/` (enforced by Semgrep: `no-console-log-in-production`)
+- File writes MUST be scoped to the configured `outputDir` or known config paths
+- No network calls during extract, render, inject, sync, or check operations
+- Template files in `src/templates/` are static content only — no dynamic code generation
+
+## Commit Message Convention
+
+Use [Conventional Commits](https://www.conventionalcommits.org/). Release-please uses these to generate changelogs and version bumps.
+
+Format: `<type>(<scope>): <description>`
+
+| Type | Use for |
+|------|---------|
+| `feat` | New feature |
+| `fix` | Bug fix |
+| `perf` | Performance improvement |
+| `docs` | Documentation only |
+| `refactor` | Code change that is not a fix or feature |
+| `test` | Adding or updating tests |
+| `chore` | Maintenance (deps, config) |
+| `ci` | CI/CD pipeline changes |
+
+## CI Quality Gate
+
+All checks MUST pass before merge to `main`:
+
+| Check | Tool | Criteria |
+|-------|------|----------|
+| Lint | Biome | Zero errors |
+| Typecheck | `tsc --noEmit` | Zero errors |
+| Tests | Bun test runner | All pass, coverage thresholds met |
+| Security | Semgrep | Zero findings (`p/security-audit`, `p/secrets`, `p/typescript`) |
+
+## Documentation
+
+| Document | Content |
+|----------|---------|
+| [Architecture](docs/ARCHITECTURE.md) | C4 diagrams, Clean Architecture layers, data flow |
+| [Maintainers](docs/MAINTAINERS.md) | Dev setup, task commands, CI/CD, release process |
+| [QA](docs/QA.md) | Test strategy, TDD workflow, coverage targets |
+| [Security](docs/SECURITY.md) | Vulnerability reporting, threat model |
+| [Contributing](CONTRIBUTING.md) | PR process, commit conventions |

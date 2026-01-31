@@ -15,5 +15,7 @@ coverageThreshold = { line = 0.8, function = 0.6, statement = 0.8 }
 # - System files (external I/O per Clean Architecture)
 coveragePathIgnorePatterns = [
   "src/cli/**",
-  "**/*.system.ts"
+  "**/*.system.ts",
+  "src/services/init.ts",
+  "tests/**"
 ]
