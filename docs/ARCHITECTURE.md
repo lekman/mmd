@@ -2,18 +2,9 @@
 
 **Audience**: Developers and contributors working on @lekman/mmd.
 
-## System Context (C4 Level 1)
-
-The system context shows how @lekman/mmd fits into a developer's workflow. The CLI operates locally within a Git repository — no external services are required during normal operation.
-
-
-<!-- mmd:architecture-0 -->
-![Architecture 0](mmd/architecture-0.svg)
-
 ## Container Diagram (C4 Level 2)
 
 The container diagram shows the internal components of the CLI and how they interact with the local filesystem.
-
 
 <!-- mmd:architecture-1 -->
 ![Architecture 1](mmd/architecture-1.svg)

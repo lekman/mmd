@@ -12,11 +12,13 @@ C4Container
     
     Container_Boundary(adapters, "Adapters") {
         Container(bm, "BeautifulMermaidRenderer", "beautiful-mermaid", "Flowchart, sequence, class, state, ER")
-        Container(mmdc, "MmdcRenderer", "mermaid-cli", "C4, gantt, pie, gitgraph, mindmap, etc.")
         Container(fs, "FileSystem", "Node.js fs", "Read/write .md, .mmd, .svg files")
+        Container(mmdc, "MmdcRenderer", "mermaid-cli", "C4, gantt, pie, gitgraph, mindmap, etc.")
     }
 
-    ContainerDb(repo, "Git Repository", "Local filesystem", ".md, .mmd, .mermaid.json, .svg files")
+    Container_Boundary(repoBoundary, "Git Repository") {
+        ContainerDb(repo, "Git Repository", "Local filesystem", ".md, .mmd, .mermaid.json, .svg files")
+    }    
 
     Rel(dev, commands, "bunx @lekman/mmd <command>")
     Rel(commands, services, "Delegates to")
@@ -26,4 +28,4 @@ C4Container
     Rel(services, fs, "IFileSystem")
     Rel(fs, repo, "Read/write files")
 
-    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="2")
+    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="3")
