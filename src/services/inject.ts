@@ -2,6 +2,7 @@ import { dirname, posix } from "node:path";
 import type { AnchorRef } from "../domain/types.ts";
 
 const ANCHOR_RE = /^<!-- mmd:([a-z0-9-]+) -->$/;
+const IMAGE_TAG_RE = /^!\[.*\]\(.*\.svg\)$/;
 
 /**
  * Find all <!-- mmd:name --> anchor comments in markdown content.
@@ -80,5 +81,39 @@ export function injectImageTags(markdown: string, sourceFile: string, outputDir:
     }
   }
 
-  return result.join("\n");
+  return deduplicateImageTags(result.join("\n").split("\n"));
+}
+
+/**
+ * Remove duplicate SVG image tags that appear after an anchor's image tag.
+ * Handles the case where on-save re-injection produces duplicates.
+ */
+function deduplicateImageTags(lines: string[]): string {
+  const output: string[] = [];
+  let i = 0;
+
+  while (i < lines.length) {
+    const line = lines[i] as string;
+    output.push(line);
+    i++;
+
+    // After an image tag line, consume any blank + duplicate image pattern
+    if (IMAGE_TAG_RE.test(line.trim())) {
+      while (i < lines.length) {
+        const next = (lines[i] as string).trim();
+        if (next === "") {
+          // Peek ahead: if a duplicate image tag follows, skip both
+          if (i + 1 < lines.length && IMAGE_TAG_RE.test((lines[i + 1] as string).trim())) {
+            i += 2; // skip blank + duplicate
+          } else {
+            break; // normal blank line, keep it
+          }
+        } else {
+          break;
+        }
+      }
+    }
+  }
+
+  return output.join("\n");
 }

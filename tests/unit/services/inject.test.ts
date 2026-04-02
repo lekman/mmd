@@ -143,4 +143,58 @@ describe("injectImageTags", () => {
     expect(result).toContain("![First](docs/mmd/first.svg)");
     expect(result).toContain("![Second](docs/mmd/second.svg)");
   });
+
+  test("does not duplicate image tag on repeated inject", () => {
+    const md = [
+      "## How It Works",
+      "",
+      "<!-- mmd:readme-2 -->",
+      "![Readme 2](docs/mmd/readme-2.svg)",
+      "",
+      "## Quick Start",
+    ].join("\n");
+
+    const first = injectImageTags(md, "README.md", "docs/mmd");
+    const second = injectImageTags(first, "README.md", "docs/mmd");
+
+    const count = (second.match(/!\[Readme 2\]/g) ?? []).length;
+    expect(count).toBe(1);
+    expect(second).toContain("## Quick Start");
+  });
+
+  test("removes duplicate image tags after blank line", () => {
+    const md = [
+      "## How It Works",
+      "",
+      "<!-- mmd:readme-2 -->",
+      "![Readme 2](docs/mmd/readme-2.svg)",
+      "",
+      "![Readme 2](docs/mmd/readme-2.svg)",
+      "",
+      "## Quick Start",
+    ].join("\n");
+
+    const result = injectImageTags(md, "README.md", "docs/mmd");
+    const count = (result.match(/!\[Readme 2\]/g) ?? []).length;
+    expect(count).toBe(1);
+    expect(result).toContain("## Quick Start");
+  });
+
+  test("removes multiple duplicate image tags", () => {
+    const md = [
+      "<!-- mmd:readme-2 -->",
+      "![Readme 2](docs/mmd/readme-2.svg)",
+      "",
+      "![Readme 2](docs/mmd/readme-2.svg)",
+      "",
+      "![Readme 2](docs/mmd/readme-2.svg)",
+      "",
+      "Next section",
+    ].join("\n");
+
+    const result = injectImageTags(md, "README.md", "docs/mmd");
+    const count = (result.match(/!\[Readme 2\]/g) ?? []).length;
+    expect(count).toBe(1);
+    expect(result).toContain("Next section");
+  });
 });
