@@ -35,19 +35,30 @@ describe("findAnchors", () => {
 });
 
 describe("generateImageTag", () => {
-  test("generates standard markdown image with anchor", () => {
-    const tag = generateImageTag("system-context", "docs/mmd");
+  test("generates standard markdown image with anchor for root-level file", () => {
+    const tag = generateImageTag("system-context", "docs/mmd", "README.md");
     expect(tag).toContain("<!-- mmd:system-context -->");
     expect(tag).toContain("![System Context](docs/mmd/system-context.svg)");
   });
 
+  test("generates relative path for subdirectory file", () => {
+    const tag = generateImageTag("architecture-0", "docs/mmd", "docs/ARCHITECTURE.md");
+    expect(tag).toContain("<!-- mmd:architecture-0 -->");
+    expect(tag).toContain("![Architecture 0](mmd/architecture-0.svg)");
+  });
+
+  test("generates relative path for deeply nested file", () => {
+    const tag = generateImageTag("guide-0", "docs/mmd", "guides/setup/INSTALL.md");
+    expect(tag).toContain("![Guide 0](../../docs/mmd/guide-0.svg)");
+  });
+
   test("computes alt text from diagram name", () => {
-    const tag = generateImageTag("ci-pipeline-flow", "docs/mmd");
+    const tag = generateImageTag("ci-pipeline-flow", "docs/mmd", "README.md");
     expect(tag).toContain("![Ci Pipeline Flow]");
   });
 
   test("does not contain picture tags", () => {
-    const tag = generateImageTag("test", "docs/mmd");
+    const tag = generateImageTag("test", "docs/mmd", "README.md");
     expect(tag).not.toContain("<picture>");
     expect(tag).not.toContain("prefers-color-scheme");
   });
@@ -73,6 +84,22 @@ describe("injectImageTags", () => {
     expect(result).toContain("![System Context](docs/mmd/system-context.svg)");
     expect(result).not.toContain("<picture>");
     expect(result).not.toContain("old/path");
+    expect(result).toContain("More text");
+  });
+
+  test("uses relative paths for subdirectory source files", () => {
+    const md = [
+      "# Architecture",
+      "",
+      "<!-- mmd:architecture-0 -->",
+      "![Architecture 0](docs/mmd/architecture-0.svg)",
+      "",
+      "More text",
+    ].join("\n");
+
+    const result = injectImageTags(md, "docs/ARCHITECTURE.md", "docs/mmd");
+    expect(result).toContain("![Architecture 0](mmd/architecture-0.svg)");
+    expect(result).not.toContain("docs/mmd/architecture-0.svg");
     expect(result).toContain("More text");
   });
 

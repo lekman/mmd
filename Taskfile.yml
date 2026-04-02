@@ -116,6 +116,7 @@ tasks:
         SECRETS=(
           "CODECOV_TOKEN"
           "NPM_TOKEN"
+          "VSCE_PAT"
           "RELEASE_BOT_APP_ID"
           "RELEASE_BOT_PRIVATE_KEY"
           "CLAUDE_CODE_OAUTH_TOKEN"
@@ -287,6 +288,12 @@ tasks:
         echo -e "  ${GREEN}task quality${NC}                     ${YELLOW}q${NC}         Run all quality checks"
         echo -e "  ${GREEN}task run${NC}                         ${YELLOW}r${NC}         Run CLI from source"
         echo -e "  ${GREEN}task build${NC}                       ${YELLOW}b${NC}         Bundle CLI for distribution"
+        echo ""
+        echo -e "${BOLD}VSCode Extension:${NC}"
+        echo -e "  ${GREEN}task vsix:build${NC}                              Build extension bundle"
+        echo -e "  ${GREEN}task vsix:package${NC}                            Package extension as .vsix"
+        echo -e "  ${GREEN}task install:vsix${NC}                            Build, package, and install locally"
+        echo -e "  ${GREEN}task vsix:publish${NC}                            Publish to VS Code Marketplace"
         echo ""
         echo -e "${BOLD}Security:${NC}"
         echo -e "  ${GREEN}task security:scan${NC}               ${YELLOW}s:s${NC}       Run semgrep security scanner"
@@ -476,3 +483,81 @@ tasks:
         echo -e "${GREEN}Building CLI...${NC}"
         bun run build
         echo -e "${GREEN}✓${NC} dist/index.js built"
+
+  vsix:build:
+    desc: "Build VSCode extension bundle"
+    silent: true
+    cmds:
+      - |
+        GREEN='\033[0;32m'
+        NC='\033[0m'
+
+        echo -e "${GREEN}Building VSCode extension...${NC}"
+        cd vsix && bun esbuild.mjs
+        echo -e "${GREEN}✓${NC} vsix/dist/extension.js built"
+
+  vsix:package:
+    desc: "Package VSCode extension as .vsix"
+    silent: true
+    deps: [vsix:build]
+    cmds:
+      - |
+        GREEN='\033[0;32m'
+        NC='\033[0m'
+
+        echo -e "${GREEN}Packaging VSCode extension...${NC}"
+        cd vsix && bunx @vscode/vsce package --no-dependencies
+        echo -e "${GREEN}✓${NC} .vsix package created"
+
+  install:vsix:
+    desc: "Build, package, and install VSCode extension locally"
+    silent: true
+    deps: [vsix:package]
+    cmds:
+      - |
+        set -euo pipefail
+        GREEN='\033[0;32m'
+        RED='\033[0;31m'
+        NC='\033[0m'
+
+        if ! command -v code &>/dev/null; then
+          echo -e "${RED}Error:${NC} 'code' CLI not found"
+          echo "Open VS Code → Cmd+Shift+P → 'Shell Command: Install code command in PATH'"
+          exit 1
+        fi
+
+        VSIX_FILE=$(ls -t vsix/*.vsix 2>/dev/null | head -1)
+        if [ -z "$VSIX_FILE" ]; then
+          echo -e "${RED}Error:${NC} No .vsix file found in vsix/"
+          exit 1
+        fi
+
+        echo -e "${GREEN}Installing${NC} $VSIX_FILE"
+        code --install-extension "$VSIX_FILE" --force
+        echo -e "${GREEN}✓${NC} Extension installed — reload VS Code window to activate"
+
+  vsix:publish:
+    desc: "Build, package, and publish VSCode extension to marketplace"
+    silent: true
+    deps: [vsix:package]
+    cmds:
+      - |
+        set -euo pipefail
+        GREEN='\033[0;32m'
+        RED='\033[0;31m'
+        NC='\033[0m'
+
+        VSCE_PAT="${VSCE_PAT:-}"
+        if [ -z "$VSCE_PAT" ] && command -v op &>/dev/null; then
+          echo -e "${GREEN}Resolving PAT from 1Password...${NC}"
+          VSCE_PAT=$(op read "op://Private/VSCode Marketplace/api key")
+        fi
+
+        if [ -z "$VSCE_PAT" ]; then
+          echo -e "${RED}Error:${NC} No PAT available (set VSCE_PAT or install 1Password CLI)"
+          exit 1
+        fi
+
+        echo -e "${GREEN}Publishing to VS Code Marketplace...${NC}"
+        cd vsix && VSCE_PAT="$VSCE_PAT" bunx @vscode/vsce publish --no-dependencies
+        echo -e "${GREEN}✓${NC} Extension published"

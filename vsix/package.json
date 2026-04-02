@@ -1,0 +1,83 @@
+{
+  "name": "mmd",
+  "displayName": "Mermaid Diagram Manager",
+  "description": "Convert and sync Mermaid diagrams to self-styled SVGs in Markdown",
+  "version": "1.3.0",
+  "publisher": "lekman",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/lekman/mmd"
+  },
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Other",
+    "Visualization"
+  ],
+  "keywords": [
+    "mermaid",
+    "diagram",
+    "svg",
+    "markdown"
+  ],
+  "activationEvents": [
+    "onLanguage:markdown"
+  ],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "mmd.convert",
+        "title": "MMD: Convert All Mermaid Blocks to SVG"
+      },
+      {
+        "command": "mmd.convertAtLine",
+        "title": "MMD: Convert Mermaid Block at Cursor"
+      },
+      {
+        "command": "mmd.sync",
+        "title": "MMD: Sync All Diagrams"
+      },
+      {
+        "command": "mmd.editSource",
+        "title": "MMD: Edit Source .mmd File"
+      },
+      {
+        "command": "mmd.rerender",
+        "title": "MMD: Re-render Diagram"
+      }
+    ],
+    "configuration": {
+      "title": "Mermaid Diagram Manager",
+      "properties": {
+        "mmd.syncOnSave": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically sync diagrams when markdown, .mmd, or .mermaid.json files are saved"
+        },
+        "mmd.outputDir": {
+          "type": "string",
+          "default": "docs/mmd",
+          "description": "Output directory for .mmd and .svg files (relative to workspace root)"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "bun esbuild.mjs",
+    "package": "vsce package --no-dependencies",
+    "lint": "biome check src/"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.85.0",
+    "@biomejs/biome": "^2.3.13",
+    "@vscode/vsce": "^3.3.2",
+    "esbuild": "^0.25.0",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "beautiful-mermaid": "^1.1.3"
+  }
+}

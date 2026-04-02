@@ -2,6 +2,7 @@ import { describe, expect, test } from "bun:test";
 import {
   extractMermaidBlocks,
   generateDiagramName,
+  nextAvailableIndex,
   replaceBlocksWithAnchors,
 } from "../../../src/services/extract.ts";
 
@@ -186,5 +187,96 @@ describe("replaceBlocksWithAnchors", () => {
     const md = "# No diagrams\n\nJust text.\n";
     const result = replaceBlocksWithAnchors(md, [], "docs/mmd");
     expect(result).toBe(md);
+  });
+
+  test("uses relative path from subdirectory source file to output", () => {
+    const md = "# Arch\n\n```mermaid\nflowchart TD\n  A --> B\n```\n";
+    const blocks = extractMermaidBlocks(md, "docs/ARCHITECTURE.md");
+    const result = replaceBlocksWithAnchors(md, blocks, "docs/mmd");
+
+    expect(result).toContain("<!-- mmd:architecture-0 -->");
+    expect(result).toContain("![Architecture 0](mmd/architecture-0.svg)");
+    expect(result).not.toContain("docs/mmd/architecture-0.svg");
+  });
+});
+
+describe("nextAvailableIndex", () => {
+  test("returns 0 when no existing anchors", () => {
+    const md = "# Title\n\nSome text\n";
+    expect(nextAvailableIndex(md, "readme")).toBe(0);
+  });
+
+  test("returns next index after existing anchors", () => {
+    const md = [
+      "<!-- mmd:architecture-0 -->",
+      "![Architecture 0](mmd/architecture-0.svg)",
+      "",
+      "<!-- mmd:architecture-1 -->",
+      "![Architecture 1](mmd/architecture-1.svg)",
+    ].join("\n");
+    expect(nextAvailableIndex(md, "architecture")).toBe(2);
+  });
+
+  test("skips anchors with different stem", () => {
+    const md = [
+      "<!-- mmd:readme-0 -->",
+      "![Readme 0](docs/mmd/readme-0.svg)",
+      "",
+      "<!-- mmd:architecture-0 -->",
+      "![Architecture 0](mmd/architecture-0.svg)",
+    ].join("\n");
+    expect(nextAvailableIndex(md, "readme")).toBe(1);
+  });
+
+  test("handles gaps in numbering", () => {
+    const md = [
+      "<!-- mmd:readme-0 -->",
+      "![Readme 0](docs/mmd/readme-0.svg)",
+      "",
+      "<!-- mmd:readme-5 -->",
+      "![Readme 5](docs/mmd/readme-5.svg)",
+    ].join("\n");
+    expect(nextAvailableIndex(md, "readme")).toBe(6);
+  });
+});
+
+describe("extractMermaidBlocks with existing anchors", () => {
+  test("starts block index after existing anchors", () => {
+    const md = [
+      "<!-- mmd:architecture-0 -->",
+      "![Architecture 0](mmd/architecture-0.svg)",
+      "",
+      "<!-- mmd:architecture-1 -->",
+      "![Architecture 1](mmd/architecture-1.svg)",
+      "",
+      "```mermaid",
+      "flowchart TD",
+      "  A --> B",
+      "```",
+    ].join("\n");
+    const blocks = extractMermaidBlocks(md, "docs/ARCHITECTURE.md");
+    expect(blocks).toHaveLength(1);
+    expect(blocks[0]!.name).toBe("architecture-2");
+  });
+
+  test("handles multiple new blocks after existing anchors", () => {
+    const md = [
+      "<!-- mmd:readme-0 -->",
+      "![Readme 0](docs/mmd/readme-0.svg)",
+      "",
+      "```mermaid",
+      "flowchart TD",
+      "  A --> B",
+      "```",
+      "",
+      "```mermaid",
+      "sequenceDiagram",
+      "  A->>B: Hi",
+      "```",
+    ].join("\n");
+    const blocks = extractMermaidBlocks(md, "README.md");
+    expect(blocks).toHaveLength(2);
+    expect(blocks[0]!.name).toBe("readme-1");
+    expect(blocks[1]!.name).toBe("readme-2");
   });
 });

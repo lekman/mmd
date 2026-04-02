@@ -11,6 +11,6 @@ export class MockRenderer implements IRenderer {
 
   async render(content: string): Promise<string> {
     this.renderCalls.push(content);
-    return `<svg>${content}</svg>`;
+    return `<svg viewBox="0 0 200 100"><g>${content}</g></svg>`;
   }
 }

@@ -5,6 +5,7 @@ import { generateImageTag } from "./inject.ts";
 const MERMAID_FENCE_RE = /^```mermaid\s*$/;
 const FENCE_CLOSE_RE = /^```\s*$/;
 const BACKTICK_RUN_RE = /^(`{3,})/;
+const ANCHOR_INDEX_RE = /^<!-- mmd:([a-z0-9-]+)-(\d+) -->$/;
 
 /**
  * Extract all fenced mermaid blocks from markdown content.
@@ -15,7 +16,8 @@ const BACKTICK_RUN_RE = /^(`{3,})/;
 export function extractMermaidBlocks(markdown: string, sourceFile: string): MermaidBlock[] {
   const lines = markdown.split("\n");
   const blocks: MermaidBlock[] = [];
-  let blockIndex = 0;
+  const stem = generateDiagramName(sourceFile, 0).replace(/-0$/, "");
+  let blockIndex = nextAvailableIndex(markdown, stem);
   let inMermaidBlock = false;
   let inOtherFence = false;
   let otherFenceLength = 0;
@@ -74,6 +76,21 @@ export function extractMermaidBlocks(markdown: string, sourceFile: string): Merm
 }
 
 /**
+ * Find the next available index for a given stem by scanning existing anchors.
+ * Returns 0 if no anchors match, or max(existing indices) + 1.
+ */
+export function nextAvailableIndex(markdown: string, stem: string): number {
+  let maxIndex = -1;
+  for (const line of markdown.split("\n")) {
+    const match = line.trim().match(ANCHOR_INDEX_RE);
+    if (match?.[1] === stem && match[2] !== undefined) {
+      maxIndex = Math.max(maxIndex, Number(match[2]));
+    }
+  }
+  return maxIndex + 1;
+}
+
+/**
  * Generate a diagram name from the source file path and block index.
  * "docs/ARCHITECTURE.md" + index 0 → "architecture-0"
  */
@@ -103,7 +120,7 @@ export function replaceBlocksWithAnchors(
     const start = block.startLine - 1; // 0-based index of opening fence
     const end = block.endLine; // 0-based index after closing fence
 
-    const replacement = generateImageTag(block.name, outputDir);
+    const replacement = generateImageTag(block.name, outputDir, block.sourceFile);
     lines.splice(start, end - start, replacement);
   }
 

@@ -1,3 +1,4 @@
+import { dirname, posix } from "node:path";
 import type { AnchorRef } from "../domain/types.ts";
 
 const ANCHOR_RE = /^<!-- mmd:([a-z0-9-]+) -->$/;
@@ -24,15 +25,26 @@ export function findAnchors(markdown: string, sourceFile: string): AnchorRef[] {
 }
 
 /**
- * Generate a standard markdown image tag for an anchor.
+ * Compute the relative path from a markdown file's directory to the output directory.
  */
-export function generateImageTag(name: string, outputDir: string): string {
+function relativeOutputDir(outputDir: string, sourceFile: string): string {
+  const sourceDir = dirname(sourceFile).split("\\").join("/");
+  const normalizedOutput = outputDir.split("\\").join("/");
+  return posix.relative(sourceDir, normalizedOutput);
+}
+
+/**
+ * Generate a standard markdown image tag for an anchor.
+ * Computes relative path from the source markdown file to the SVG.
+ */
+export function generateImageTag(name: string, outputDir: string, sourceFile: string): string {
   const alt = name
     .split("-")
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
     .join(" ");
 
-  return [`<!-- mmd:${name} -->`, `![${alt}](${outputDir}/${name}.svg)`].join("\n");
+  const relDir = relativeOutputDir(outputDir, sourceFile);
+  return [`<!-- mmd:${name} -->`, `![${alt}](${relDir}/${name}.svg)`].join("\n");
 }
 
 /**
@@ -40,7 +52,7 @@ export function generateImageTag(name: string, outputDir: string): string {
  * Replaces the anchor line and any following content block (picture tag, img tag, etc.)
  * until the next blank line or anchor.
  */
-export function injectImageTags(markdown: string, _sourceFile: string, outputDir: string): string {
+export function injectImageTags(markdown: string, sourceFile: string, outputDir: string): string {
   const lines = markdown.split("\n");
   const result: string[] = [];
   let i = 0;
@@ -52,7 +64,7 @@ export function injectImageTags(markdown: string, _sourceFile: string, outputDir
     if (match?.[1]) {
       const name = match[1];
       // Replace anchor and consume any following content block
-      result.push(generateImageTag(name, outputDir));
+      result.push(generateImageTag(name, outputDir, sourceFile));
       i++;
 
       // Skip lines until we hit a blank line, another anchor, or end of file

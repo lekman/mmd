@@ -13,22 +13,29 @@ user-invocable: false
 - Edit `.mmd` files in `docs/mmd/`, not inline Mermaid in Markdown
 - Run `mmd sync` after editing to generate themed SVGs and update Markdown
 - Commands:
-  - `mmd extract` — scan `.md` files, extract fenced Mermaid blocks to `docs/mmd/*.mmd`
-  - `mmd render` — render `.mmd` files to SVGs using `.mermaid.json` theme config
-  - `mmd render --force` — re-render all diagrams regardless of timestamps
-  - `mmd inject` — replace `<!-- mmd:name -->` anchors in `.md` files with markdown image refs
-  - `mmd sync` — run extract + render + inject in sequence
-  - `mmd sync [files...]` — process specific `.md` files instead of all
+  - `mmd convert <file>` — convert fenced Mermaid blocks to SVG references in a single file
+  - `mmd convert <file> --block <n>` — convert only the nth block (0-based)
+  - `mmd sync` — run extract + render + inject across all `.md` files
+  - `mmd sync [files...]` — process specific `.md` files
+  - `mmd sync --force` — re-render all diagrams regardless of timestamps
+  - `mmd extract` — scan `.md` files, extract fenced Mermaid blocks to `.mmd` files
+  - `mmd render` — render `.mmd` files to SVGs using `.mermaid.json` theme
+  - `mmd inject` — replace `<!-- mmd:name -->` anchors with markdown image refs
   - `mmd check` — lint for orphaned inline Mermaid blocks in managed files
-  - `mmd init` — install AI coding assistant rule files into the repo
-  - `mmd config` — write default `.mermaid.json` to the repository root
-- Config: `.mermaid.json` at repo root defines theme mode (light/dark), themes, and output directory
+  - `mmd init` — install AI coding assistant rule files
+  - `mmd config` — write default `.mermaid.json`
+- Config: `.mermaid.json` at repo root defines theme mode, themes, output directory, and SVG styling
 - Anchors: `<!-- mmd:name -->` HTML comments link Markdown locations to diagrams
+- Multi-location: the same anchor name can appear in multiple `.md` files (shared diagram)
+- SVGs are self-styled with white background, rounded corners, and border — no `<div>` wrappers needed
 - Render uses mtime comparison: `.mmd` and `.mermaid.json` are checked; SVGs re-rendered when stale
 - Primary renderer: beautiful-mermaid (flowchart, state)
 - Fallback renderer: mmdc (sequence, class, ER, C4, gantt, pie, gitgraph, mindmap, timeline, quadrant, kanban, requirement, architecture)
 
 ## Syntax Best Practices
+
+### Line Breaks
+- Use `<br>` for line breaks in node labels, not `\n` — `\n` is not valid in Mermaid
 
 ### Node and Edge Naming
 - Use descriptive node IDs: `userService`, `authController`, `orderDb` not `A`, `B`, `C`
@@ -106,9 +113,16 @@ repo/
 
 ## Injected Output Format
 
-Standard markdown image format, compatible with GitHub and VS Code:
+Standard markdown image format — no `<div>` wrappers needed (styling is baked into the SVG):
 
 ```markdown
 <!-- mmd:system-context -->
 ![System Context](docs/mmd/system-context.svg)
 ```
+
+## VSCode Extension
+
+Install the `lekman.mmd` extension for CodeLens actions:
+- Above `` ```mermaid `` blocks: "Convert to SVG"
+- Above `<!-- mmd:name -->` anchors: "Edit Source", "Re-render"
+- Auto-sync on save (configurable via `mmd.syncOnSave` setting)

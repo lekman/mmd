@@ -83,18 +83,24 @@ export const initCommand = new Command("init")
       }
     }
 
-    // Add VS Code extension recommendation
-    const vscodeExtPath = ".vscode/extensions.json";
     if (!flags.global) {
+      // Add VS Code extension recommendations
+      const vscodeExtPath = ".vscode/extensions.json";
       try {
         let extensions: { recommendations?: string[] } = {};
         if (existsSync(vscodeExtPath)) {
           extensions = JSON.parse(readFileSync(vscodeExtPath, "utf-8"));
         }
         const recs = extensions.recommendations ?? [];
-        const ext = "MermaidChart.vscode-mermaid-chart";
-        if (!recs.includes(ext)) {
-          recs.push(ext);
+        const requiredExts = ["lekman.mmd", "MermaidChart.vscode-mermaid-chart"];
+        let changed = false;
+        for (const ext of requiredExts) {
+          if (!recs.includes(ext)) {
+            recs.push(ext);
+            changed = true;
+          }
+        }
+        if (changed) {
           extensions.recommendations = recs;
           mkdirSync(".vscode", { recursive: true });
           writeFileSync(vscodeExtPath, `${JSON.stringify(extensions, null, 2)}\n`);
@@ -104,5 +110,40 @@ export const initCommand = new Command("init")
       } catch {
         // ignore VS Code extension errors
       }
+
+      // Ensure AI tool directories are tracked in git (override global gitignore)
+      ensureGitignoreOverrides(tools);
     }
   });
+
+/**
+ * Add negation entries to .gitignore so AI tool directories are tracked in git,
+ * even when the user has a global gitignore that excludes .claude/ or .cursor/.
+ */
+function ensureGitignoreOverrides(tools: AiTool[]): void {
+  const overrides: Record<AiTool, string[]> = {
+    claude: ["!.claude/skills/", "!.claude/skills/mermaid/"],
+    cursor: ["!.cursor/rules/"],
+    copilot: [],
+  };
+
+  const entries = tools.flatMap((t) => overrides[t]);
+  if (entries.length === 0) return;
+
+  const gitignorePath = ".gitignore";
+  let content = "";
+  try {
+    content = readFileSync(gitignorePath, "utf-8");
+  } catch {
+    // no .gitignore
+  }
+
+  const missing = entries.filter((e) => !content.includes(e));
+  if (missing.length === 0) return;
+
+  const section = ["", "# AI coding assistant rules (tracked in git)", ...missing, ""].join("\n");
+
+  writeFileSync(gitignorePath, `${content.trimEnd()}\n${section}`);
+  // biome-ignore lint/suspicious/noConsole: CLI output
+  console.log(`  updated: ${gitignorePath} (added git tracking for AI rules)`);
+}

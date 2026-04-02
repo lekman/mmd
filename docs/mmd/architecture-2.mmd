@@ -1,0 +1,32 @@
+%%{init: {'theme':'neutral', 'themeVariables': { 'primaryColor':'#e3f2fd', 'primaryTextColor':'#000', 'primaryBorderColor':'#1976d2', 'lineColor':'#616161', 'secondaryColor':'#fff3e0', 'tertiaryColor':'#f3e5f5', 'fontSize':'14px'}}}%%
+sequenceDiagram
+    participant CLI as mmd render
+    participant Svc as Render Service
+    participant Cfg as .mermaid.json
+    participant Det as Type Detector
+    participant BM as BeautifulMermaid
+    participant MMDC as mmdc (fallback)
+    participant FS as FileSystem
+
+    CLI->>Svc: renderDiagrams(config, options)
+    Svc->>Cfg: Read theme config (mode + theme)
+    loop Each .mmd file
+        Svc->>FS: Read .mmd content
+        Svc->>FS: Check mtime (.mmd and .mermaid.json vs .svg)
+        alt Source or config is newer, or --force
+            Svc->>Det: detectDiagramType(content)
+            Det-->>Svc: DiagramType
+            alt Supported by beautiful-mermaid
+                Svc->>BM: render(content + selected theme)
+                BM-->>Svc: SVG string
+            else Fallback to mmdc
+                Svc->>MMDC: render(content + selected theme)
+                MMDC-->>Svc: SVG string
+            end
+            Svc->>FS: Write .svg
+            Svc->>FS: Delete old .light.svg / .dark.svg (if exist)
+        else Up to date
+            Note over Svc: Skip rendering
+        end
+    end
+    Svc-->>CLI: RenderResult[]

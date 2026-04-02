@@ -1,0 +1,16 @@
+C4Context
+    title @lekman/mmd - System Context
+
+    Person(dev, "Developer", "Writes Markdown with Mermaid diagrams")
+
+    System(mmd, "@lekman/mmd", "CLI tool: extract, render, inject Mermaid SVGs")
+
+    System_Ext(github, "GitHub", "Renders markdown image tags in README and docs")
+    System_Ext(vscode, "VS Code", "Mermaid Chart extension for live preview")
+
+    Rel(dev, mmd, "bunx @lekman/mmd sync")
+    Rel(dev, github, "git push")
+    Rel(dev, vscode, "Edit .mmd files")
+    Rel(mmd, github, "Generates SVGs committed to repo")
+
+    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
