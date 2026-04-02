@@ -24,7 +24,7 @@ export class MockFileSystem implements IFileSystem {
   }
 
   async glob(pattern: string, _cwd: string): Promise<string[]> {
-    const suffix = pattern.replace("*", "");
+    const suffix = pattern.replaceAll("*", "");
     return [...this.files.keys()].filter((k) => k.endsWith(suffix));
   }
 
