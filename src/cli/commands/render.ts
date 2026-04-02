@@ -27,7 +27,7 @@ export const renderCommand = new Command("render")
 
     const results = await renderDiagrams(config, {
       renderer: createRenderer(),
-      fallbackRenderer: createFallbackRenderer(),
+      fallbackRenderer: createFallbackRenderer(config.renderWidth),
       fs,
       mmdFiles: fullPaths,
       force: options.force,

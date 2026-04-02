@@ -32,6 +32,12 @@ function resolveMmdcBinary(): string | null {
  * This is a system adapter — excluded from unit test coverage.
  */
 export class MmdcRenderer implements IRenderer {
+  private readonly width: number;
+
+  constructor(width = 1200) {
+    this.width = width;
+  }
+
   readonly supportedTypes: ReadonlySet<DiagramType> = new Set<DiagramType>([
     "flowchart",
     "sequence",
@@ -67,7 +73,17 @@ export class MmdcRenderer implements IRenderer {
 
     try {
       writeFileSync(inputPath, content);
-      const proc = Bun.spawnSync([mmdcPath, "-i", inputPath, "-o", outputPath, "-e", "svg"]);
+      const proc = Bun.spawnSync([
+        mmdcPath,
+        "-i",
+        inputPath,
+        "-o",
+        outputPath,
+        "-e",
+        "svg",
+        "-w",
+        String(this.width),
+      ]);
       if (proc.exitCode !== 0) {
         const stderr = proc.stderr.toString();
         throw new Error(`mmdc failed (exit ${proc.exitCode}): ${stderr}`);
