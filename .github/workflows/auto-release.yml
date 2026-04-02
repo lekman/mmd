@@ -76,6 +76,7 @@ jobs:
           while IFS= read -r file; do
             case "$file" in
               package.json) ;;
+              vsix/package.json) ;;
               docs/CHANGELOG.md) ;;
               .release-please-manifest.json) ;;
               *)
