@@ -1,0 +1,6 @@
+flowchart TD
+    extract[1. Extract<br>.md to .mmd + anchors]
+    render[2. Render<br>.mmd to .svg]
+    inject[3. Inject<br>anchors to image tags]
+
+    extract --> render --> inject

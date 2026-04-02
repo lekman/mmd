@@ -1,0 +1,9 @@
+flowchart TD
+    scan[Scan .md files for mermaid fenced blocks]
+    name[Generate name from file path + block index]
+    detect[Detect diagram type from first line]
+    write[Write content to .mmd file]
+    replace[Replace fenced block with anchor comment]
+    done[Updated .md files with anchors]
+
+    scan --> name --> detect --> write --> replace --> done

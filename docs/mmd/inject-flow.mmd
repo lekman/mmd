@@ -1,0 +1,7 @@
+flowchart TD
+    scanAnchors[Scan .md files for mmd anchor comments]
+    computePath[Compute relative path from .md to SVG]
+    generateTag[Generate markdown image tag]
+    updated[Updated .md files with image tags]
+
+    scanAnchors --> computePath --> generateTag --> updated

@@ -1,0 +1,29 @@
+%%{init: {'theme':'neutral', 'themeVariables': { 'primaryColor':'#e3f2fd', 'primaryTextColor':'#000', 'primaryBorderColor':'#1976d2', 'lineColor':'#616161', 'secondaryColor':'#fff3e0', 'tertiaryColor':'#f3e5f5', 'fontSize':'14px'}}}%%
+C4Container
+    title @lekman/mmd - Container Diagram
+
+    Person(dev, "Developer")
+
+    Container_Boundary(cli, "mmd CLI") {
+        Container(commands, "CLI Commands", "Commander", "extract, render, inject, sync, check, init")
+        Container(services, "Services", "TypeScript", "Business logic: extract, render, inject, sync, check")
+        Container(domain, "Domain", "TypeScript", "Types, interfaces, validation")
+    }
+    
+    Container_Boundary(adapters, "Adapters") {
+        Container(bm, "BeautifulMermaidRenderer", "beautiful-mermaid", "Flowchart, sequence, class, state, ER")
+        Container(mmdc, "MmdcRenderer", "mermaid-cli", "C4, gantt, pie, gitgraph, mindmap, etc.")
+        Container(fs, "FileSystem", "Node.js fs", "Read/write .md, .mmd, .svg files")
+    }
+
+    ContainerDb(repo, "Git Repository", "Local filesystem", ".md, .mmd, .mermaid.json, .svg files")
+
+    Rel(dev, commands, "bunx @lekman/mmd <command>")
+    Rel(commands, services, "Delegates to")
+    Rel(services, domain, "Uses types and interfaces")
+    Rel(services, bm, "IRenderer")
+    Rel(services, mmdc, "IRenderer (fallback)")
+    Rel(services, fs, "IFileSystem")
+    Rel(fs, repo, "Read/write files")
+
+    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="2")

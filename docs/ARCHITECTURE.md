@@ -6,69 +6,17 @@
 
 The system context shows how @lekman/mmd fits into a developer's workflow. The CLI operates locally within a Git repository — no external services are required during normal operation.
 
-<div style="background: white; background-color: white; padding: 0px; border: 1px solid #ccc; border-radius: 10px;">
 
-```mermaid
-%%{init: {'theme':'neutral', 'themeVariables': { 'primaryColor':'#e3f2fd', 'primaryTextColor':'#000', 'primaryBorderColor':'#1976d2', 'lineColor':'#616161', 'secondaryColor':'#fff3e0', 'tertiaryColor':'#f3e5f5', 'fontSize':'14px'}}}%%
-C4Context
-    title @lekman/mmd - System Context
-
-    Person(dev, "Developer", "Writes Markdown with Mermaid diagrams")
-
-    System(mmd, "@lekman/mmd", "CLI tool: extract, render, inject Mermaid SVGs")
-
-    System_Ext(github, "GitHub", "Renders markdown image tags in README and docs")
-    System_Ext(vscode, "VS Code", "Mermaid Chart extension for live preview")
-
-    Rel(dev, mmd, "bunx @lekman/mmd sync")
-    Rel(dev, github, "git push")
-    Rel(dev, vscode, "Edit .mmd files")
-    Rel(mmd, github, "Generates SVGs committed to repo")
-
-    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="1")
-```
-
-</div>
+<!-- mmd:architecture-0 -->
+![Architecture 0](mmd/architecture-0.svg)
 
 ## Container Diagram (C4 Level 2)
 
 The container diagram shows the internal components of the CLI and how they interact with the local filesystem.
 
-<div style="background: white; background-color: white; padding: 0px; border: 1px solid #ccc; border-radius: 10px;">
 
-```mermaid
-%%{init: {'theme':'neutral', 'themeVariables': { 'primaryColor':'#e3f2fd', 'primaryTextColor':'#000', 'primaryBorderColor':'#1976d2', 'lineColor':'#616161', 'secondaryColor':'#fff3e0', 'tertiaryColor':'#f3e5f5', 'fontSize':'14px'}}}%%
-C4Container
-    title @lekman/mmd - Container Diagram
-
-    Person(dev, "Developer")
-
-    Container_Boundary(cli, "mmd CLI") {
-        Container(commands, "CLI Commands", "Commander", "extract, render, inject, sync, check, init")
-        Container(services, "Services", "TypeScript", "Business logic: extract, render, inject, sync, check")
-        Container(domain, "Domain", "TypeScript", "Types, interfaces, validation")
-    }
-
-    Container_Boundary(adapters, "Adapters") {
-        Container(bm, "BeautifulMermaidRenderer", "beautiful-mermaid", "Flowchart, sequence, class, state, ER")
-        Container(mmdc, "MmdcRenderer", "mermaid-cli", "C4, gantt, pie, gitgraph, mindmap, etc.")
-        Container(fs, "FileSystem", "Node.js fs", "Read/write .md, .mmd, .svg files")
-    }
-
-    ContainerDb(repo, "Git Repository", "Local filesystem", ".md, .mmd, .mermaid.json, .svg files")
-
-    Rel(dev, commands, "bunx @lekman/mmd <command>")
-    Rel(commands, services, "Delegates to")
-    Rel(services, domain, "Uses types and interfaces")
-    Rel(services, bm, "IRenderer")
-    Rel(services, mmdc, "IRenderer (fallback)")
-    Rel(services, fs, "IFileSystem")
-    Rel(fs, repo, "Read/write files")
-
-    UpdateLayoutConfig($c4ShapeInRow="3", $c4BoundaryInRow="2")
-```
-
-</div>
+<!-- mmd:architecture-1 -->
+![Architecture 1](mmd/architecture-1.svg)
 
 ## Clean Architecture Layers
 
@@ -83,12 +31,8 @@ Dependencies point inward. Business logic never imports from infrastructure.
 
 ### Dependency Rule
 
-```
-CLI → Services → Domain ← Adapters
-         ↑                    ↑
-         └────── uses ────────┘
-         (via interface injection)
-```
+<!-- mmd:dependency-rule -->
+![Dependency Rule](mmd/dependency-rule.svg)
 
 - `domain/` has zero external imports
 - `services/` depend on interfaces from `domain/`, never on `adapters/`
@@ -97,7 +41,7 @@ CLI → Services → Domain ← Adapters
 
 ## Directory Structure
 
-```
+```ini
 src/
   domain/
     types.ts              # MermaidBlock, ThemeConfig, RenderResult, DiagramType
@@ -137,44 +81,8 @@ Files with external I/O use the `*.system.ts` suffix. These files are excluded f
 
 The render service processes each `.mmd` file using the configured theme mode:
 
-<div style="background: white; background-color: white; padding: 0px; border: 1px solid #ccc; border-radius: 10px;">
-
-```mermaid
-%%{init: {'theme':'neutral', 'themeVariables': { 'primaryColor':'#e3f2fd', 'primaryTextColor':'#000', 'primaryBorderColor':'#1976d2', 'lineColor':'#616161', 'secondaryColor':'#fff3e0', 'tertiaryColor':'#f3e5f5', 'fontSize':'14px'}}}%%
-sequenceDiagram
-    participant CLI as mmd render
-    participant Svc as Render Service
-    participant Cfg as .mermaid.json
-    participant Det as Type Detector
-    participant BM as BeautifulMermaid
-    participant MMDC as mmdc (fallback)
-    participant FS as FileSystem
-
-    CLI->>Svc: renderDiagrams(config, options)
-    Svc->>Cfg: Read theme config (mode + theme)
-    loop Each .mmd file
-        Svc->>FS: Read .mmd content
-        Svc->>FS: Check mtime (.mmd and .mermaid.json vs .svg)
-        alt Source or config is newer, or --force
-            Svc->>Det: detectDiagramType(content)
-            Det-->>Svc: DiagramType
-            alt Supported by beautiful-mermaid
-                Svc->>BM: render(content + selected theme)
-                BM-->>Svc: SVG string
-            else Fallback to mmdc
-                Svc->>MMDC: render(content + selected theme)
-                MMDC-->>Svc: SVG string
-            end
-            Svc->>FS: Write .svg
-            Svc->>FS: Delete old .light.svg / .dark.svg (if exist)
-        else Up to date
-            Note over Svc: Skip rendering
-        end
-    end
-    Svc-->>CLI: RenderResult[]
-```
-
-</div>
+<!-- mmd:architecture-2 -->
+![Architecture 2](mmd/architecture-2.svg)
 
 ### Rendering Steps
 
@@ -206,43 +114,18 @@ sequenceDiagram
 
 ### Extract Flow
 
-```
-**/*.md files
-  │
-  ├─ Scan for ```mermaid fenced blocks
-  │
-  ├─ For each block:
-  │   ├─ Generate name from file path + block index
-  │   ├─ Detect diagram type from first line
-  │   ├─ Write content to docs/mmd/<name>.mmd
-  │   └─ Replace fenced block with <!-- mmd:name --> anchor
-  │
-  └─ Updated .md files with anchors
-```
+<!-- mmd:extract-flow -->
+![Extract Flow](mmd/extract-flow.svg)
 
 ### Inject Flow
 
-```
-**/*.md files
-  │
-  ├─ Scan for <!-- mmd:name --> anchor comments
-  │
-  ├─ For each anchor:
-  │   ├─ Compute relative path from .md to SVGs
-  │   └─ Generate markdown image tag: ![Name](path/name.svg)
-  │
-  └─ Updated .md files with markdown image tags
-```
+<!-- mmd:inject-flow -->
+![Inject Flow](mmd/inject-flow.svg)
 
 ### Sync Flow
 
-```
-mmd sync [--force]
-  │
-  ├─ 1. Extract: .md → .mmd files + anchor comments
-  ├─ 2. Render:  .mmd → .svg (using selected theme mode)
-  └─ 3. Inject:  anchors → ![alt](path) markdown images
-```
+<!-- mmd:sync-flow -->
+![Sync Flow](mmd/sync-flow.svg)
 
 ## Interface Boundaries
 
