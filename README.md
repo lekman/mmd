@@ -6,7 +6,9 @@ Extract, render, and inject themed SVGs into Markdown.
 
 ## Overview
 
-`@lekman/mmd` eliminates manual Mermaid theming hacks across repositories. It extracts inline Mermaid diagram blocks from Markdown files, renders them to themed SVGs using a configurable light/dark mode, and injects standard markdown image tags back into the Markdown. The result is diagrams that render correctly on GitHub and in VS Code.
+`@lekman/mmd` eliminates manual Mermaid theming hacks across repositories. It extracts inline Mermaid diagram blocks from Markdown files, renders them to self-styled SVGs (white background, rounded corners, border), and injects standard markdown image tags back into the Markdown. The result is diagrams that render correctly on GitHub, in VS Code, Confluence, and Word exports — no `<div>` wrappers needed.
+
+<a href="docs/mmd/architecture-1.svg"><img src="docs/mmd/architecture-1.svg" alt="Rendered SVG preview" width="300"></a>
 
 ## Features
 
@@ -64,9 +66,8 @@ npm install -g @mermaid-js/mermaid-cli
 3. The tool extracts the block to `docs/mmd/<name>.mmd`, renders a themed SVG, and replaces the fenced block with a markdown image:
 
     ```markdown
-    <!-- mmd:architecture-0 -->
-    ![Architecture 0](docs/mmd/architecture-0.svg)
-    ```
+<!-- mmd:architecture-0 -->
+![Architecture 0](docs/mmd/architecture-0.svg)
 
 4. Commit both the `.mmd` source files and the generated `.svg` files.
 
@@ -153,6 +154,10 @@ Edit .md file → add ```mermaid block → mmd sync
 
 ### Editing an existing `.mmd` file directly
 
+The VSCode extension adds CodeLens actions above anchors for quick access:
+
+![CodeLens actions in VS Code](docs/assets/ide.png)
+
 ```
 Edit docs/mmd/<name>.mmd → mmd render (or mmd sync)
   Compare max(.mmd mtime, .mermaid.json mtime) vs .svg mtime
@@ -226,15 +231,15 @@ The [`examples/`](examples/) directory contains `.mmd` files for all supported d
 
 | Document | Audience | Content |
 | -------- | -------- | ------- |
-| [Architecture](ARCHITECTURE.md) | Contributors | C4 diagrams, Clean Architecture layers, data flow |
-| [Contributing](CONTRIBUTING.md) | Contributors | Dev setup, task commands, CI/CD, release process, PR conventions |
-| [Quality Assurance](QA.md) | Contributors | Test strategy, TDD workflow, coverage targets |
-| [Security](SECURITY.md) | Security researchers | Vulnerability reporting, threat model |
-| [Changelog](CHANGELOG.md) | Users | Release history |
+| [Architecture](docs/ARCHITECTURE.md) | Contributors | C4 diagrams, Clean Architecture layers, data flow |
+| [Contributing](docs/CONTRIBUTING.md) | Contributors | Dev setup, task commands, CI/CD, release process, PR conventions |
+| [Quality Assurance](docs/QA.md) | Contributors | Test strategy, TDD workflow, coverage targets |
+| [Security](docs/SECURITY.md) | Security researchers | Vulnerability reporting, threat model |
+| [Changelog](docs/CHANGELOG.md) | Users | Release history |
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup, PR process, and commit conventions.
+See [Contributing](docs/CONTRIBUTING.md) for development setup, PR process, and commit conventions.
 
 ## License
 
