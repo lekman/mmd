@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.1](https://github.com/lekman/mmd/compare/mmd-v1.3.0...mmd-v1.3.1) (2026-04-02)
+
+
+### Bug Fixes
+
+* **inject:** deduplicate image tags on repeated save ([07bc877](https://github.com/lekman/mmd/commit/07bc8774b277d34a789e34b445c3effc2e8e9515))
+
 ## [1.3.0](https://github.com/lekman/mmd/compare/mmd-v1.2.1...mmd-v1.3.0) (2026-04-02)
 
 
