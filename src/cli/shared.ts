@@ -43,6 +43,14 @@ export const DEFAULT_CONFIG: ThemeConfig = {
   },
   renderer: "beautiful-mermaid",
   fallbackRenderer: "mmdc",
+  renderWidth: 1200,
+  svgStyle: {
+    background: "#ffffff",
+    borderColor: "#cccccc",
+    borderWidth: 1,
+    borderRadius: 10,
+    padding: 20,
+  },
 };
 
 export const CONFIG_PATH = resolve(process.cwd(), ".mermaid.json");
@@ -68,6 +76,6 @@ export function createRenderer() {
   return new BeautifulMermaidRenderer();
 }
 
-export function createFallbackRenderer() {
-  return new MmdcRenderer();
+export function createFallbackRenderer(width?: number) {
+  return new MmdcRenderer(width);
 }

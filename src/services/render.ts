@@ -1,6 +1,7 @@
 import type { IFileSystem, IRenderer } from "../domain/interfaces.ts";
 import type { RenderResult, ThemeConfig, ThemeDef } from "../domain/types.ts";
 import { BEAUTIFUL_MERMAID_TYPES, detectDiagramType } from "../domain/types.ts";
+import { postProcessSvg } from "./svg-post-process.ts";
 
 /**
  * Prepend a %%{init: ...}%% directive to Mermaid content.
@@ -70,9 +71,10 @@ export async function renderDiagrams(
     // Choose renderer based on diagram type
     const activeRenderer = BEAUTIFUL_MERMAID_TYPES.has(diagramType) ? renderer : fallbackRenderer;
 
-    // Render single SVG with selected theme
+    // Render single SVG with selected theme, then post-process with styling
     const themed = prependThemeInit(content, theme);
-    const svg = await activeRenderer.render(themed);
+    const raw = await activeRenderer.render(themed);
+    const svg = postProcessSvg(raw, config.svgStyle);
     await fs.writeFile(svgPath, svg);
 
     // Clean up old dual-mode files
