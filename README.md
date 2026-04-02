@@ -2,6 +2,7 @@
 
 [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/lekman.mmd?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=lekman.mmd)
 [![npm version](https://img.shields.io/npm/v/@lekman/mmd)](https://www.npmjs.com/package/@lekman/mmd)
+[![codecov](https://codecov.io/gh/lekman/mmd/graph/badge.svg?token=Q9JrvN8z9A)](https://codecov.io/gh/lekman/mmd)
 
 Extract, render, and inject themed SVGs into Markdown. Diagrams render correctly on GitHub, VS Code, Confluence, and Word exports — no `<div>` wrappers needed.
 
