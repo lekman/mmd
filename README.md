@@ -1,5 +1,6 @@
 # Mermaid Diagram Management
 
+[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/lekman.mmd?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=lekman.mmd)
 [![npm version](https://img.shields.io/npm/v/@lekman/mmd)](https://www.npmjs.com/package/@lekman/mmd)
 
 Extract, render, and inject themed SVGs into Markdown.
@@ -67,26 +68,27 @@ npm install -g @mermaid-js/mermaid-cli
 
 ## Quick Start
 
-1. Add a Mermaid block to any `.md` file:
+### VS Code
 
-    ````markdown
-    ```mermaid
-    flowchart TD
-      A[Write Markdown] --> B[Add Mermaid block]
-      B --> C[Run mmd sync]
-      C --> D[Commit SVGs]
-    ```
-    ````
+1. Add a mermaid fenced block to any `.md` file
+2. Click **"Convert to SVG"** on the CodeLens above the block
+3. The block is extracted, rendered to a self-styled SVG, and replaced with an image tag
+4. Edit the `.mmd` source file — SVGs re-render on save automatically
 
-2. Run the sync command:
+### CLI / AI Agents
 
-    ```bash
-    bunx @lekman/mmd sync
-    ```
+```bash
+# Convert all mermaid blocks in a file
+bunx @lekman/mmd convert README.md
 
-3. The tool extracts the block to `docs/mmd/<name>.mmd`, renders a themed SVG, and replaces the fenced block with a markdown image.
+# Sync all .md files in the repo (extract + render + inject)
+bunx @lekman/mmd sync
 
-4. Commit both the `.mmd` source files and the generated `.svg` files.
+# Re-render after editing .mmd files
+bunx @lekman/mmd render --force
+```
+
+Commit both the `.mmd` source files and the generated `.svg` files.
 
 ## Commands
 
