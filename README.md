@@ -3,68 +3,33 @@
 [![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/lekman.mmd?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=lekman.mmd)
 [![npm version](https://img.shields.io/npm/v/@lekman/mmd)](https://www.npmjs.com/package/@lekman/mmd)
 
-Extract, render, and inject themed SVGs into Markdown.
+Extract, render, and inject themed SVGs into Markdown. Diagrams render correctly on GitHub, VS Code, Confluence, and Word exports — no `<div>` wrappers needed.
 
-## Overview
-
-`@lekman/mmd` eliminates manual Mermaid theming hacks across repositories. It extracts inline Mermaid diagram blocks from Markdown files, renders them to self-styled SVGs (white background, rounded corners, border), and injects standard markdown image tags back into the Markdown. 
-
-<a href="docs/assets/ide.png"><img src="docs/assets/ide.png" alt="CodeLens actions in VS Code" width="500"></a>
-
-The result is diagrams that render correctly on GitHub, in VS Code, Confluence, and Word exports — no `<div>` wrappers needed.
-
-<a href="docs/mmd/architecture-1.svg"><img src="docs/mmd/architecture-1.svg" alt="Rendered SVG preview" width="500"></a>
-
-## Features
-
-- Extract inline Mermaid blocks from `.md` files into standalone `.mmd` files
-- Render `.mmd` files to `*.svg` using configurable light or dark theme
-- Inject standard markdown image tags (`![alt](path)`) into Markdown
-- Timestamp-based staleness checking — re-renders when `.mmd` or `.mermaid.json` changes
-- Dual renderer: [beautiful-mermaid](https://github.com/lukilabs/beautiful-mermaid) for supported types, [mermaid-cli](https://github.com/mermaid-js/mermaid-cli) fallback for the rest
-- AI coding assistant rule files for Claude Code, Cursor, and GitHub Copilot
-- Supports 15 Mermaid diagram types: flowchart, sequence, class, state, ER, C4, gantt, pie, gitgraph, mindmap, timeline, quadrant, kanban, requirement, architecture
+<a href="docs/mmd/architecture-1.svg"><img src="docs/mmd/architecture-1.svg" alt="Rendered SVG preview" width="400"></a>
 
 ## Installation
 
 ### VS Code Extension (recommended)
 
-Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=lekman.mmd) — provides CodeLens actions, on-save sync, and command palette integration.
+Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=lekman.mmd). Provides CodeLens actions, on-save sync, and command palette integration.
 
-### CLI (for terminal users, CI pipelines, and AI agents)
+### CLI (terminal, CI pipelines, AI agents)
 
 Requires [Bun](https://bun.sh/) runtime.
 
 ```bash
-# Run directly without installing
-bunx @lekman/mmd sync
-
-# Or install globally
-bun add -g @lekman/mmd
+bunx @lekman/mmd sync            # run directly
+bun add -g @lekman/mmd           # or install globally
 ```
 
 ### AI Coding Assistant Rules
 
-Install rule files for Claude Code, Cursor, and GitHub Copilot. These teach AI agents the mermaid workflow and `.mmd` file conventions, and are committed to the repository so all contributors benefit.
+Installs rules for Claude Code, Cursor, and GitHub Copilot. Committed to the repo so all contributors benefit.
 
 ```bash
-bunx @lekman/mmd init          # Auto-detect and install matching rules
-bunx @lekman/mmd init --all    # Install all rule files
+bunx @lekman/mmd init            # auto-detect and install
+bunx @lekman/mmd init --all      # install all rule files
 ```
-
-The `init` command also ensures the installed files are tracked in git (adds `.gitignore` entries to override global ignores for `.claude/skills/` and `.cursor/rules/`).
-
-### Fallback renderer (mermaid-cli)
-
-The primary renderer ([beautiful-mermaid](https://github.com/lukilabs/beautiful-mermaid)) handles flowchart and state diagrams natively. All other diagram types require `@mermaid-js/mermaid-cli` (mmdc) as a fallback renderer.
-
-Install mmdc globally using npm before running `sync` or `render` on non-flowchart/state diagrams:
-
-```bash
-npm install -g @mermaid-js/mermaid-cli
-```
-
-> **Note:** Use `npm` (not `bun`) for global mermaid-cli installation due to a Bun compatibility issue with git dependencies.
 
 ## Quick Start
 
@@ -75,190 +40,78 @@ npm install -g @mermaid-js/mermaid-cli
 3. The block is extracted, rendered to a self-styled SVG, and replaced with an image tag
 4. Edit the `.mmd` source file — SVGs re-render on save automatically
 
+<a href="docs/assets/ide.png"><img src="docs/assets/ide.png" alt="CodeLens actions in VS Code" width="400"></a>
+
 ### CLI / AI Agents
 
 ```bash
-# Convert all mermaid blocks in a file
-bunx @lekman/mmd convert README.md
-
-# Sync all .md files in the repo (extract + render + inject)
-bunx @lekman/mmd sync
-
-# Re-render after editing .mmd files
-bunx @lekman/mmd render --force
+bunx @lekman/mmd convert README.md     # convert blocks in a file
+bunx @lekman/mmd sync                  # sync all .md files
+bunx @lekman/mmd render --force        # re-render after editing .mmd
 ```
-
-Commit both the `.mmd` source files and the generated `.svg` files.
 
 ## Commands
 
-| Command | Description | Flags |
-| ------- | ----------- | ----- |
-| `mmd extract [files...]` | Scan `.md` files, extract Mermaid blocks to `docs/mmd/*.mmd` | |
-| `mmd render [files...]` | Render stale `docs/mmd/*.mmd` to `*.svg` | `--force` re-render all |
-| `mmd inject [files...]` | Replace anchor comments in `.md` files with markdown image refs | |
-| `mmd sync [files...]` | Run extract + render + inject in sequence | `--force` re-render all |
-| `mmd check [files...]` | Lint: warn on inline Mermaid blocks in managed `.md` files | |
-| `mmd config` | Write default `.mermaid.json` to the repository root | `--force` overwrite existing |
-| `mmd init` | Install AI coding assistant rule files | `--global`, `--all`, `--claude`, `--cursor`, `--copilot`, `--force` |
+| Command | Description |
+| ------- | ----------- |
+| `mmd convert <file>` | Convert mermaid blocks to SVG references |
+| `mmd sync [files...]` | Extract + render + inject (use `--force` to re-render all) |
+| `mmd render [files...]` | Render stale `.mmd` to `.svg` |
+| `mmd extract [files...]` | Extract fenced blocks to `.mmd` files |
+| `mmd inject [files...]` | Update anchor comments with image tags |
+| `mmd check [files...]` | Lint for orphaned inline mermaid blocks |
+| `mmd config` | Write default `.mermaid.json` |
+| `mmd init` | Install AI assistant rules (`--all`, `--claude`, `--cursor`, `--copilot`) |
 
 ## Configuration
 
-Create a `.mermaid.json` file in your repository root. This defines the output directory and shared theme variables for all diagrams:
+Place a `.mermaid.json` in your repository root:
 
 ```json
 {
   "outputDir": "docs/mmd",
   "mode": "light",
-  "themes": {
-    "light": {
-      "theme": "base",
-      "themeVariables": {
-        "background": "#ffffff",
-        "primaryColor": "#ddf4ff",
-        "primaryTextColor": "#1f2328",
-        "primaryBorderColor": "#218bff",
-        "lineColor": "#656d76",
-        "secondaryColor": "#dafbe1",
-        "tertiaryColor": "#fff8c5",
-        "noteBkgColor": "#f6f8fa",
-        "noteTextColor": "#1f2328",
-        "fontSize": "14px"
-      }
-    },
-    "dark": {
-      "theme": "base",
-      "themeVariables": {
-        "background": "#0d1117",
-        "primaryColor": "#1f3a5f",
-        "primaryTextColor": "#e6edf3",
-        "primaryBorderColor": "#58a6ff",
-        "lineColor": "#8b949e",
-        "secondaryColor": "#1a3d2e",
-        "tertiaryColor": "#3d2e00",
-        "noteBkgColor": "#161b22",
-        "noteTextColor": "#e6edf3",
-        "fontSize": "14px"
-      }
-    }
-  },
-  "renderer": "beautiful-mermaid",
-  "fallbackRenderer": "mmdc"
+  "renderWidth": 1200,
+  "svgStyle": {
+    "background": "#ffffff",
+    "borderColor": "#cccccc",
+    "borderRadius": 10,
+    "padding": 20
+  }
 }
 ```
 
-The default themes match GitHub's light and dark color palettes.
+Run `mmd config` to generate a full config with light and dark themes matching GitHub's color palettes.
 
-| Field | Type | Description |
-| ----- | ---- | ----------- |
-| `outputDir` | `string` | Directory for `.mmd` source files and generated SVGs |
-| `mode` | `"light"` \| `"dark"` | Which theme to use for rendering (default: `"light"`) |
-| `themes.light` | `ThemeDef` | Mermaid theme config for light mode |
-| `themes.dark` | `ThemeDef` | Mermaid theme config for dark mode |
-| `renderer` | `string` | Primary renderer (`beautiful-mermaid`) |
-| `fallbackRenderer` | `string` | Fallback for unsupported diagram types (`mmdc`) |
-
-## Workflow
-
-The tool supports two editing workflows:
-
-### Adding a new diagram to Markdown
-
-```
-Edit .md file → add ```mermaid block → mmd sync
-  1. Extract: fenced block → docs/mmd/<name>.mmd
-  2. Render:  .mmd → .svg (using selected theme mode)
-  3. Inject:  replace fenced block with <!-- mmd:name --> + ![alt](path)
-```
-
-### Editing an existing `.mmd` file directly
-
-The VSCode extension adds CodeLens actions above anchors for quick access:
-
-
-
-```
-Edit docs/mmd/<name>.mmd → mmd render (or mmd sync)
-  Compare max(.mmd mtime, .mermaid.json mtime) vs .svg mtime
-  If source is newer → re-render SVG with selected theme
-  If .svg is newer → skip (already up to date)
-```
-
-Use `--force` to re-render all diagrams regardless of timestamps.
+| Field | Description |
+| ----- | ----------- |
+| `outputDir` | Directory for `.mmd` and `.svg` files |
+| `mode` | `"light"` or `"dark"` theme selection |
+| `renderWidth` | Puppeteer viewport width for mmdc (default: 1200) |
+| `svgStyle` | Background, border, corner radius, padding baked into SVGs |
+| `themes` | Light and dark Mermaid theme variables |
+| `renderer` | Primary renderer (`beautiful-mermaid`) |
+| `fallbackRenderer` | Fallback for unsupported types (`mmdc`) |
 
 ## Renderer Support
-
-The primary renderer is beautiful-mermaid (zero-DOM, TypeScript-native). Diagram types it does not support fall back to mermaid-cli (mmdc, Puppeteer-based).
 
 | Renderer | Diagram Types |
 | -------- | ------------- |
 | beautiful-mermaid | flowchart, state |
 | mmdc (fallback) | sequence, class, ER, C4, gantt, pie, gitgraph, mindmap, timeline, quadrant, kanban, requirement, architecture |
 
-Diagram type is detected by parsing the first non-comment line of the `.mmd` file.
-
-## AI Coding Assistant Integration
-
-`mmd init` installs rule files that teach AI coding assistants the Mermaid workflow and `.mmd` file conventions:
-
-| AI Tool | Installed Path | Trigger |
-| ------- | -------------- | ------- |
-| Claude Code | `.claude/skills/mermaid/SKILL.md` | Auto-invoked on `.mmd` files |
-| Cursor | `.cursor/rules/mermaid.mdc` | Activated on `.mmd` and `.md` edits |
-| GitHub Copilot | `.github/instructions/mermaid.instructions.md` | Applied to `**/*.mmd` and `docs/**` |
-
-```bash
-mmd init              # Auto-detect installed tools, install matching rules
-mmd init --all        # Install all rule files
-mmd init --global     # Install to user-level paths (Claude Code only)
-mmd init --force      # Overwrite existing rule files
-```
-
-## Generated File Structure
-
-```
-repo/
-  .mermaid.json                    # Theme configuration
-  docs/
-    ARCHITECTURE.md                # Contains <!-- mmd:xxx --> anchors + image refs
-    mmd/
-      system-context.mmd           # Source diagram
-      system-context.svg           # Rendered SVG (themed per config mode)
-```
-
-## Examples
-
-The [`examples/`](examples/) directory contains `.mmd` files for all supported diagram types:
-
-| File | Diagram Type |
-| ---- | ------------ |
-| `01-sequence-user-login.mmd` | Sequence |
-| `02-flowchart-ci-pipeline.mmd` | Flowchart |
-| `03-class-domain-model.mmd` | Class |
-| `04-c4-context.mmd` | C4 Context |
-| `05-c4-container.mmd` | C4 Container |
-| `06-c4-component.mmd` | C4 Component |
-| `07-requirement-traceability.mmd` | Requirement |
-| `08-gitgraph-branching.mmd` | Gitgraph |
-| `09-mindmap-feature-brainstorm.mmd` | Mindmap |
-| `10-timeline-project-roadmap.mmd` | Timeline |
-| `11-quadrant-effort-impact.mmd` | Quadrant |
-| `12-kanban-sprint-board.mmd` | Kanban |
-| `13-architecture-cloud-deploy.mmd` | Architecture |
+Install mmdc for non-flowchart/state diagrams: `npm install -g @mermaid-js/mermaid-cli`
 
 ## Documentation
 
-| Document | Audience | Content |
-| -------- | -------- | ------- |
-| [Architecture](docs/ARCHITECTURE.md) | Contributors | C4 diagrams, Clean Architecture layers, data flow |
-| [Contributing](docs/CONTRIBUTING.md) | Contributors | Dev setup, task commands, CI/CD, release process, PR conventions |
-| [Quality Assurance](docs/QA.md) | Contributors | Test strategy, TDD workflow, coverage targets |
-| [Security](docs/SECURITY.md) | Security researchers | Vulnerability reporting, threat model |
-| [Changelog](docs/CHANGELOG.md) | Users | Release history |
-
-## Contributing
-
-See [Contributing](docs/CONTRIBUTING.md) for development setup, PR process, and commit conventions.
+| Document | Audience |
+| -------- | -------- |
+| [Architecture](docs/ARCHITECTURE.md) | C4 diagrams, Clean Architecture layers, data flow |
+| [Contributing](docs/CONTRIBUTING.md) | Dev setup, task commands, CI/CD, release process |
+| [Quality Assurance](docs/QA.md) | TDD workflow, coverage targets, test strategy |
+| [Security](docs/SECURITY.md) | Vulnerability reporting, threat model |
+| [Changelog](docs/CHANGELOG.md) | Release history |
+| [Examples](examples/) | `.mmd` files for all 15 supported diagram types |
 
 ## License
 
