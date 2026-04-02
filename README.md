@@ -24,21 +24,34 @@ The result is diagrams that render correctly on GitHub, in VS Code, Confluence, 
 - AI coding assistant rule files for Claude Code, Cursor, and GitHub Copilot
 - Supports 15 Mermaid diagram types: flowchart, sequence, class, state, ER, C4, gantt, pie, gitgraph, mindmap, timeline, quadrant, kanban, requirement, architecture
 
-## Installation and Usage
+## Installation
 
-Main intall: https://marketplace.visualstudio.com/items?itemName=lekman.mmd
+### VS Code Extension (recommended)
 
-Below: direct NPM
+Install from the [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=lekman.mmd) — provides CodeLens actions, on-save sync, and command palette integration.
 
-Requires [Bun](https://bun.sh/) runtime (the CLI uses Bun APIs internally).
+### CLI (for terminal users, CI pipelines, and AI agents)
+
+Requires [Bun](https://bun.sh/) runtime.
 
 ```bash
-# Install mmd
-bun add -g @lekman/mmd
-
-# Or run directly without installing
+# Run directly without installing
 bunx @lekman/mmd sync
+
+# Or install globally
+bun add -g @lekman/mmd
 ```
+
+### AI Coding Assistant Rules
+
+Install rule files for Claude Code, Cursor, and GitHub Copilot. These teach AI agents the mermaid workflow and `.mmd` file conventions, and are committed to the repository so all contributors benefit.
+
+```bash
+bunx @lekman/mmd init          # Auto-detect and install matching rules
+bunx @lekman/mmd init --all    # Install all rule files
+```
+
+The `init` command also ensures the installed files are tracked in git (adds `.gitignore` entries to override global ignores for `.claude/skills/` and `.cursor/rules/`).
 
 ### Fallback renderer (mermaid-cli)
 
