@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-CLI tool (`@lekman/mmd`) that extracts inline Mermaid diagrams from Markdown, renders them to themed SVGs using a configurable light/dark mode, and injects standard markdown image tags back into Markdown. Distributed via `bunx @lekman/mmd`.
+CLI tool (`@lekman/mmd`) and VSCode extension that extracts inline Mermaid diagrams from Markdown, renders them to self-styled SVGs (white background, rounded corners, border), and injects standard markdown image tags back into Markdown. Distributed via `bunx @lekman/mmd` (CLI) and `lekman.mmd` (VSCode Marketplace).
 
 ## Commands
 
@@ -20,6 +20,8 @@ task test:coverage    # Tests with coverage report (alias: cov)
 task quality          # Run all quality checks (alias: q)
 task run              # Run CLI sync from source (alias: r)
 task build            # Build CLI bundle (alias: b)
+task vsix:build       # Build VSCode extension bundle
+task vsix:package     # Package VSCode extension as .vsix
 
 # Single test file
 bun test tests/unit/services/extract.test.ts
@@ -60,6 +62,7 @@ Violations of this dependency rule must be rejected in review.
 | CLI command | `src/cli/commands/` | Excluded from coverage |
 | Shared CLI wiring (factories) | `src/cli/shared.ts` | N/A |
 | AI skill template | `src/templates/` | N/A |
+| VSCode extension source | `vsix/src/` | N/A (separate build) |
 | Mock implementation | `tests/mocks/` | N/A |
 
 ### System File Convention
@@ -111,7 +114,8 @@ All shared types live in `src/domain/types.ts`:
 | `DiagramType` | Union of supported diagram types + `"unknown"` |
 | `MermaidBlock` | Extracted fenced block with content, source file, line range, name |
 | `ThemeMode` | Theme mode selection: `"light"` or `"dark"` |
-| `ThemeConfig` | Parsed `.mermaid.json` with mode, themes, and renderer preference |
+| `ThemeConfig` | Parsed `.mermaid.json` with mode, themes, renderer preference, and SVG styling |
+| `SvgStyleOptions` | SVG post-processing options (background, border, radius, padding) |
 | `ThemeDef` | Theme definition for a single mode |
 | `RenderResult` | Output paths from rendering (source, SVG) |
 | `AnchorRef` | Parsed `<!-- mmd:name -->` comment with position |
@@ -219,9 +223,11 @@ Tests MUST use these shared mocks (or create inline mocks following the same pat
 | Service | Key scenarios |
 |---------|--------------|
 | extract | Find blocks, zero blocks, multiple blocks, name generation, anchor replacement |
-| render | Single-mode theme, mtime staleness skip (source + config), `--force`, fallback renderer routing, old file cleanup |
+| render | Single-mode theme, mtime staleness skip (source + config), `--force`, fallback renderer routing, old file cleanup, SVG post-processing integration |
 | inject | Markdown image tag generation, relative paths, multiple anchors, no-op when no anchors, backward compat with old `<picture>` blocks |
 | sync | Pipeline order (extract → render → inject), `--force` passthrough |
+| convert | All blocks, single block by index, out-of-range index, skip existing .mmd files, relative paths |
+| svg-post-process | Background rect insertion, viewBox expansion, border/radius, custom options, no viewBox graceful fallback |
 | check | Orphaned blocks in anchored files, ignore unmanaged files |
 | init | AI tool detection, path resolution, `--force`, `--global` scope limits |
 

@@ -1,8 +1,9 @@
-# Publish to npm and GitHub Packages when a release is published.
+# Publish to npm, GitHub Packages, and VS Code Marketplace when a release is published.
 # Triggered by release-please creating a GitHub release, or manually via workflow_dispatch.
 #
 # Required secrets:
-#   NPM_TOKEN — npm access token with publish permission for @lekman scope
+#   NPM_TOKEN  — npm access token with publish permission for @lekman scope
+#   VSCE_PAT   — VS Code Marketplace Personal Access Token (publisher: lekman)
 
 name: Continuous Deployment
 
@@ -58,6 +59,38 @@ jobs:
               exit 1
             fi
           }
+
+  publish-vsix:
+    name: Publish to VS Code Marketplace
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.tag || github.event.release.tag_name }}
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: latest
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Install dependencies
+        run: cd vsix && bun install
+
+      - name: Build extension
+        run: cd vsix && bun esbuild.mjs --minify
+
+      - name: Package and publish
+        run: cd vsix && npx @vscode/vsce publish --no-dependencies -p "$VSCE_PAT"
+        env:
+          VSCE_PAT: ${{ secrets.VSCE_PAT }}
 
   publish-gpr:
     name: Publish to GitHub Packages

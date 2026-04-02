@@ -48,6 +48,15 @@ export interface ThemeDef {
   themeVariables?: Record<string, string>;
 }
 
+/** SVG post-processing style options (baked into rendered SVGs). */
+export interface SvgStyleOptions {
+  background?: string;
+  borderColor?: string;
+  borderWidth?: number;
+  borderRadius?: number;
+  padding?: number;
+}
+
 /** Parsed .mermaid.json configuration. */
 export interface ThemeConfig {
   outputDir: string;
@@ -58,6 +67,9 @@ export interface ThemeConfig {
   };
   renderer?: string;
   fallbackRenderer?: string;
+  svgStyle?: SvgStyleOptions;
+  /** Puppeteer viewport width for mmdc rendering (default: 1200). */
+  renderWidth?: number;
 }
 
 /** Result of rendering a single .mmd file. */

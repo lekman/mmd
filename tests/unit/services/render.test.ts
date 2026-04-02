@@ -192,6 +192,30 @@ describe("renderDiagrams", () => {
     expect(results).toHaveLength(1);
   });
 
+  test("applies SVG post-processing with background and border", async () => {
+    const styledConfig: ThemeConfig = {
+      ...config,
+      svgStyle: { background: "#ffffff", borderColor: "#cccccc", borderRadius: 10, padding: 20 },
+    };
+    const fs = new MockFileSystem();
+    fs.setFile("docs/mmd/test.mmd", "flowchart TD\n  A --> B");
+
+    const renderer = new MockRenderer(["flowchart"]);
+
+    await renderDiagrams(styledConfig, {
+      renderer,
+      fallbackRenderer: renderer,
+      fs,
+      mmdFiles: ["docs/mmd/test.mmd"],
+    });
+
+    const svg = await fs.readFile("docs/mmd/test.svg");
+    expect(svg).toContain('fill="#ffffff"');
+    expect(svg).toContain('rx="10"');
+    expect(svg).toContain('stroke="#cccccc"');
+    expect(svg).toContain('viewBox="-20 -20 240 140"');
+  });
+
   test("cleans up old .light.svg and .dark.svg files", async () => {
     const fs = new MockFileSystem();
     fs.setFile("docs/mmd/test.mmd", "flowchart TD\n  A --> B");

@@ -27,7 +27,7 @@ export const syncCommand = new Command("sync")
       config,
       mdFiles,
       renderer: createRenderer(),
-      fallbackRenderer: createFallbackRenderer(),
+      fallbackRenderer: createFallbackRenderer(config.renderWidth),
       fs,
       force: options.force,
       configPath: CONFIG_PATH,

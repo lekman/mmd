@@ -8,17 +8,19 @@ applyTo: "**/*.mmd,**/*.md,docs/**"
 
 - Edit `.mmd` files in `docs/mmd/`, not inline Mermaid in Markdown
 - Run `mmd sync` after editing to generate themed SVGs and update Markdown
-- `mmd extract` — extract fenced Mermaid blocks from `.md` to `docs/mmd/*.mmd`
+- `mmd convert <file>` — convert fenced Mermaid blocks to SVG references
+- `mmd convert <file> --block <n>` — convert a specific block (0-based index)
+- `mmd sync` — run extract + render + inject across all `.md` files
+- `mmd sync [files...] [--force]` — process specific files or force re-render all
+- `mmd extract` — extract fenced Mermaid blocks from `.md` to `.mmd` files
 - `mmd render` — render `.mmd` to SVGs via `.mermaid.json` config
-- `mmd render --force` — re-render all regardless of timestamps
 - `mmd inject` — replace `<!-- mmd:name -->` anchors with markdown image refs
-- `mmd sync` — run extract + render + inject in sequence
-- `mmd sync [files...]` — process specific `.md` files instead of all
 - `mmd check` — lint for orphaned inline Mermaid blocks
-- `mmd config` — write default `.mermaid.json` to the repository root
-- Config: `.mermaid.json` at repo root (mode, themes, output dir)
-- Anchors: `<!-- mmd:name -->` comments link Markdown to diagrams
-- Render skips up-to-date files (mtime comparison on `.mmd` and `.mermaid.json`); use `--force` to override
+- `mmd config` — write default `.mermaid.json`
+- Config: `.mermaid.json` at repo root (mode, themes, output dir, SVG styling)
+- Anchors: `<!-- mmd:name -->` comments link Markdown to diagrams (multi-location supported)
+- SVGs are self-styled with background, border, and rounded corners — no `<div>` wrappers needed
+- Render skips up-to-date files (mtime comparison); use `--force` to override
 - Renderers: beautiful-mermaid (flowchart, state), mmdc fallback (all other types)
 
 ## Syntax Best Practices

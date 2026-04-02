@@ -2,6 +2,7 @@
 import { Command } from "commander";
 import { checkCommand } from "./commands/check.ts";
 import { configCommand } from "./commands/config.ts";
+import { convertCommand } from "./commands/convert.ts";
 import { extractCommand } from "./commands/extract.ts";
 import { initCommand } from "./commands/init.ts";
 import { injectCommand } from "./commands/inject.ts";
@@ -15,6 +16,7 @@ program
   .description("Mermaid diagram management — extract, render, and inject themed SVGs")
   .version("0.0.0");
 
+program.addCommand(convertCommand);
 program.addCommand(extractCommand);
 program.addCommand(renderCommand);
 program.addCommand(injectCommand);

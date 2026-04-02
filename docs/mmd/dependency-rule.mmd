@@ -1,0 +1,5 @@
+flowchart LR
+    CLI --> Services
+    Services --> Domain
+    Adapters -->|implements| Domain
+    CLI -->|injects adapters into| Services
