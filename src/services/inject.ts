@@ -28,8 +28,9 @@ export function findAnchors(markdown: string, sourceFile: string): AnchorRef[] {
  * Compute the relative path from a markdown file's directory to the output directory.
  */
 function relativeOutputDir(outputDir: string, sourceFile: string): string {
-  const sourceDir = dirname(sourceFile);
-  return posix.relative(sourceDir, outputDir);
+  const sourceDir = dirname(sourceFile).split("\\").join("/");
+  const normalizedOutput = outputDir.split("\\").join("/");
+  return posix.relative(sourceDir, normalizedOutput);
 }
 
 /**

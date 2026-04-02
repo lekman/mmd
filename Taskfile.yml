@@ -559,5 +559,5 @@ tasks:
         fi
 
         echo -e "${GREEN}Publishing to VS Code Marketplace...${NC}"
-        cd vsix && bunx @vscode/vsce publish --no-dependencies -p "$VSCE_PAT"
+        cd vsix && VSCE_PAT="$VSCE_PAT" bunx @vscode/vsce publish --no-dependencies
         echo -e "${GREEN}✓${NC} Extension published"

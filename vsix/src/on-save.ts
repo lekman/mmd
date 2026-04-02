@@ -5,6 +5,8 @@ import { renderDiagrams } from "../../src/services/render";
 import { VsCodeFileSystem } from "./adapters/vscode-fs";
 import { getConfig, getConfigPath, getOutputDir, createRenderer, createFallbackRenderer } from "./shared";
 
+const inFlightSaves = new Set<string>();
+
 function getWorkspaceRoot(): string | undefined {
   return vscode.workspace.workspaceFolders?.[0]?.uri.fsPath;
 }
@@ -21,6 +23,9 @@ export async function onDidSave(document: vscode.TextDocument): Promise<void> {
 
   const filePath = document.uri.fsPath;
   const relativePath = path.relative(root, filePath);
+
+  if (inFlightSaves.has(relativePath)) return;
+
   const ext = path.extname(filePath).toLowerCase();
   const basename = path.basename(filePath);
 
@@ -32,7 +37,12 @@ export async function onDidSave(document: vscode.TextDocument): Promise<void> {
     const outputDir = getOutputDir(root);
     const injected = injectImageTags(content, relativePath, outputDir);
     if (injected !== content) {
-      await fs.writeFile(relativePath, injected);
+      inFlightSaves.add(relativePath);
+      try {
+        await fs.writeFile(relativePath, injected);
+      } finally {
+        inFlightSaves.delete(relativePath);
+      }
     }
   } else if (ext === ".mmd") {
     // Re-render this specific diagram

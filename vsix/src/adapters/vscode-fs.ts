@@ -1,4 +1,3 @@
-import * as fs from "node:fs";
 import * as fsp from "node:fs/promises";
 import * as path from "node:path";
 import type { IFileSystem } from "../../../src/domain/interfaces";
@@ -11,7 +10,11 @@ export class VsCodeFileSystem implements IFileSystem {
   constructor(private readonly workspaceRoot: string) {}
 
   private resolve(p: string): string {
-    return path.resolve(this.workspaceRoot, p);
+    const resolved = path.resolve(this.workspaceRoot, p);
+    if (!resolved.startsWith(this.workspaceRoot + path.sep) && resolved !== this.workspaceRoot) {
+      throw new Error(`Path "${p}" escapes workspace root`);
+    }
+    return resolved;
   }
 
   async readFile(filePath: string): Promise<string> {

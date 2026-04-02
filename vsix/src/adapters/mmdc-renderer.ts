@@ -13,7 +13,8 @@ function resolveMmdcBinary(): string | null {
   if (existsSync(localBin)) return localBin;
 
   try {
-    const resolved = execSync("which mmdc", { encoding: "utf-8" }).trim();
+    const cmd = process.platform === "win32" ? "where mmdc" : "which mmdc";
+    const resolved = execSync(cmd, { encoding: "utf-8" }).trim().split(/\r?\n/)[0];
     if (resolved) return resolved;
   } catch {
     // not found

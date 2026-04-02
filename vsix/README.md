@@ -50,6 +50,10 @@ Place a `.mermaid.json` in your repository root to configure themes and output:
   "outputDir": "docs/mmd",
   "mode": "light",
   "renderWidth": 1200,
+  "themes": {
+    "light": { "theme": "base" },
+    "dark": { "theme": "base" }
+  },
   "svgStyle": {
     "background": "#ffffff",
     "borderColor": "#cccccc",

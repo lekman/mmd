@@ -18,11 +18,12 @@ export class MmdCodeLensProvider implements vscode.CodeLensProvider {
     const lenses: vscode.CodeLens[] = [];
 
     for (let i = 0; i < document.lineCount; i++) {
-      const line = document.lineAt(i).text.trim();
+      const textLine = document.lineAt(i);
+      const trimmed = textLine.text.trim();
 
       // Mermaid fenced block opener
-      if (MERMAID_FENCE_RE.test(line)) {
-        const range = new vscode.Range(i, 0, i, line.length);
+      if (MERMAID_FENCE_RE.test(trimmed)) {
+        const range = new vscode.Range(i, 0, i, textLine.text.length);
         lenses.push(
           new vscode.CodeLens(range, {
             title: "Convert to SVG",
@@ -33,10 +34,10 @@ export class MmdCodeLensProvider implements vscode.CodeLensProvider {
       }
 
       // mmd anchor comment
-      const anchorMatch = line.match(ANCHOR_RE);
+      const anchorMatch = trimmed.match(ANCHOR_RE);
       if (anchorMatch?.[1]) {
         const name = anchorMatch[1];
-        const range = new vscode.Range(i, 0, i, line.length);
+        const range = new vscode.Range(i, 0, i, textLine.text.length);
         lenses.push(
           new vscode.CodeLens(range, {
             title: "Edit Source",

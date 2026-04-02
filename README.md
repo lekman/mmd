@@ -6,9 +6,13 @@ Extract, render, and inject themed SVGs into Markdown.
 
 ## Overview
 
-`@lekman/mmd` eliminates manual Mermaid theming hacks across repositories. It extracts inline Mermaid diagram blocks from Markdown files, renders them to self-styled SVGs (white background, rounded corners, border), and injects standard markdown image tags back into the Markdown. The result is diagrams that render correctly on GitHub, in VS Code, Confluence, and Word exports — no `<div>` wrappers needed.
+`@lekman/mmd` eliminates manual Mermaid theming hacks across repositories. It extracts inline Mermaid diagram blocks from Markdown files, renders them to self-styled SVGs (white background, rounded corners, border), and injects standard markdown image tags back into the Markdown. 
 
-<a href="docs/mmd/architecture-1.svg"><img src="docs/mmd/architecture-1.svg" alt="Rendered SVG preview" width="300"></a>
+<a href="docs/assets/ide.png"><img src="docs/assets/ide.png" alt="CodeLens actions in VS Code" width="500"></a>
+
+The result is diagrams that render correctly on GitHub, in VS Code, Confluence, and Word exports — no `<div>` wrappers needed.
+
+<a href="docs/mmd/architecture-1.svg"><img src="docs/mmd/architecture-1.svg" alt="Rendered SVG preview" width="500"></a>
 
 ## Features
 
@@ -21,6 +25,10 @@ Extract, render, and inject themed SVGs into Markdown.
 - Supports 15 Mermaid diagram types: flowchart, sequence, class, state, ER, C4, gantt, pie, gitgraph, mindmap, timeline, quadrant, kanban, requirement, architecture
 
 ## Installation and Usage
+
+Main intall: https://marketplace.visualstudio.com/items?itemName=lekman.mmd
+
+Below: direct NPM
 
 Requires [Bun](https://bun.sh/) runtime (the CLI uses Bun APIs internally).
 
@@ -63,11 +71,7 @@ npm install -g @mermaid-js/mermaid-cli
     bunx @lekman/mmd sync
     ```
 
-3. The tool extracts the block to `docs/mmd/<name>.mmd`, renders a themed SVG, and replaces the fenced block with a markdown image:
-
-    ```markdown
-<!-- mmd:architecture-0 -->
-![Architecture 0](docs/mmd/architecture-0.svg)
+3. The tool extracts the block to `docs/mmd/<name>.mmd`, renders a themed SVG, and replaces the fenced block with a markdown image.
 
 4. Commit both the `.mmd` source files and the generated `.svg` files.
 
@@ -156,7 +160,7 @@ Edit .md file → add ```mermaid block → mmd sync
 
 The VSCode extension adds CodeLens actions above anchors for quick access:
 
-![CodeLens actions in VS Code](docs/assets/ide.png)
+
 
 ```
 Edit docs/mmd/<name>.mmd → mmd render (or mmd sync)

@@ -22,7 +22,12 @@ export const convertCommand = new Command("convert")
       renderer: createRenderer(),
       fallbackRenderer: createFallbackRenderer(config.renderWidth),
       fs,
-      blockIndex: options.block !== undefined ? Number(options.block) : undefined,
+      blockIndex: (() => {
+        if (options.block === undefined) return undefined;
+        const n = Number(options.block);
+        if (Number.isNaN(n)) throw new Error(`Invalid block index: ${options.block}`);
+        return n;
+      })(),
       configPath: CONFIG_PATH,
     });
 
