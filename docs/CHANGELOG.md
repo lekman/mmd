@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.2](https://github.com/lekman/mmd/compare/mmd-v1.3.1...mmd-v1.3.2) (2026-04-06)
+
+
+### Bug Fixes
+
+* **render:** strip Mermaid YAML frontmatter before rendering ([e973d6b](https://github.com/lekman/mmd/commit/e973d6bf6a29f75777e93d6b11061af983c03cb2))
+
 ## [1.3.1](https://github.com/lekman/mmd/compare/mmd-v1.3.0...mmd-v1.3.1) (2026-04-02)
 
 
