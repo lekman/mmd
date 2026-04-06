@@ -6,6 +6,7 @@ import {
   isValidThemeConfig,
   type MermaidBlock,
   type RenderResult,
+  stripFrontmatter,
   type ThemeConfig,
   type ThemeMode,
 } from "../../../src/domain/types.ts";
@@ -105,6 +106,69 @@ describe("DiagramType detection", () => {
 
   test("returns unknown for empty content", () => {
     expect(detectDiagramType("")).toBe("unknown");
+  });
+
+  test("detects C4Deployment after frontmatter", () => {
+    expect(
+      detectDiagramType("---\nconfig:\n  theme: neutral\n---\nC4Deployment\n  title System")
+    ).toBe("c4");
+  });
+
+  test("detects flowchart after frontmatter", () => {
+    expect(detectDiagramType("---\ntitle: My Chart\n---\nflowchart TD\n  A --> B")).toBe(
+      "flowchart"
+    );
+  });
+
+  test("detects type after frontmatter with leading blank lines", () => {
+    expect(detectDiagramType("\n---\nconfig: {}\n---\nsequenceDiagram\n  A->>B: Hi")).toBe(
+      "sequence"
+    );
+  });
+
+  test("returns unknown for unclosed frontmatter", () => {
+    expect(detectDiagramType("---\nconfig:\n  theme: neutral")).toBe("unknown");
+  });
+});
+
+describe("stripFrontmatter", () => {
+  test("strips basic YAML frontmatter", () => {
+    const input = "---\nconfig:\n  theme: neutral\n---\nC4Deployment\n  title X";
+    expect(stripFrontmatter(input)).toBe("C4Deployment\n  title X");
+  });
+
+  test("returns content unchanged when no frontmatter", () => {
+    const input = "flowchart TD\n  A --> B";
+    expect(stripFrontmatter(input)).toBe(input);
+  });
+
+  test("handles leading blank lines before frontmatter", () => {
+    const input = "\n\n---\nconfig:\n  theme: dark\n---\ngantt\n  title X";
+    expect(stripFrontmatter(input)).toBe("gantt\n  title X");
+  });
+
+  test("returns original when --- has no closing delimiter", () => {
+    const input = "---\nconfig:\n  theme: neutral\nC4Deployment";
+    expect(stripFrontmatter(input)).toBe(input);
+  });
+
+  test("does not strip --- that appears mid-content", () => {
+    const input = "flowchart TD\n  A --> B\n---\nnote";
+    expect(stripFrontmatter(input)).toBe(input);
+  });
+
+  test("handles empty content", () => {
+    expect(stripFrontmatter("")).toBe("");
+  });
+
+  test("handles frontmatter-only content with no body", () => {
+    const input = "---\nconfig:\n  theme: neutral\n---";
+    expect(stripFrontmatter(input)).toBe("");
+  });
+
+  test("handles frontmatter with trailing newline and no body", () => {
+    const input = "---\nconfig:\n  theme: neutral\n---\n";
+    expect(stripFrontmatter(input)).toBe("");
   });
 });
 

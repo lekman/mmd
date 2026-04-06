@@ -216,6 +216,35 @@ describe("renderDiagrams", () => {
     expect(svg).toContain('viewBox="-20 -20 240 140"');
   });
 
+  test("strips frontmatter before rendering", async () => {
+    const fs = new MockFileSystem();
+    fs.setFile(
+      "docs/mmd/infra.mmd",
+      "---\nconfig:\n  theme: neutral\n---\nC4Deployment\n  title System"
+    );
+
+    const primary = new MockRenderer(["flowchart"]);
+    const fallback = new MockRenderer(["c4"]);
+
+    await renderDiagrams(config, {
+      renderer: primary,
+      fallbackRenderer: fallback,
+      fs,
+      mmdFiles: ["docs/mmd/infra.mmd"],
+    });
+
+    // Fallback renderer used for C4 (not primary)
+    expect(primary.renderCalls).toHaveLength(0);
+    expect(fallback.renderCalls).toHaveLength(1);
+
+    // Renderer receives content without frontmatter, with %%{init:}%% prepended
+    const rendered = fallback.renderCalls[0]!;
+    expect(rendered).toContain("%%{init:");
+    expect(rendered).toContain("C4Deployment");
+    expect(rendered).not.toContain("---");
+    expect(rendered).not.toContain("theme: neutral");
+  });
+
   test("cleans up old .light.svg and .dark.svg files", async () => {
     const fs = new MockFileSystem();
     fs.setFile("docs/mmd/test.mmd", "flowchart TD\n  A --> B");
