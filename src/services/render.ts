@@ -1,6 +1,6 @@
 import type { IFileSystem, IRenderer } from "../domain/interfaces.ts";
 import type { RenderResult, ThemeConfig, ThemeDef } from "../domain/types.ts";
-import { BEAUTIFUL_MERMAID_TYPES, detectDiagramType } from "../domain/types.ts";
+import { BEAUTIFUL_MERMAID_TYPES, detectDiagramType, stripFrontmatter } from "../domain/types.ts";
 import { postProcessSvg } from "./svg-post-process.ts";
 
 /**
@@ -72,7 +72,8 @@ export async function renderDiagrams(
     const activeRenderer = BEAUTIFUL_MERMAID_TYPES.has(diagramType) ? renderer : fallbackRenderer;
 
     // Render single SVG with selected theme, then post-process with styling
-    const themed = prependThemeInit(content, theme);
+    const stripped = stripFrontmatter(content);
+    const themed = prependThemeInit(stripped, theme);
     const raw = await activeRenderer.render(themed);
     const svg = postProcessSvg(raw, config.svgStyle);
     await fs.writeFile(svgPath, svg);

@@ -107,15 +107,32 @@ const DIAGRAM_PATTERNS: ReadonlyArray<[RegExp, DiagramType]> = [
   [/^requirementDiagram\b/, "requirement"],
 ];
 
+/** Regex matching Mermaid YAML frontmatter at the start of content. */
+const FRONTMATTER_RE = /^\s*---\r?\n[\s\S]*?\n---[^\S\n]*\r?\n?/;
+
+/**
+ * Strip Mermaid YAML frontmatter (delimited by ---) from the start of content.
+ * Returns the content unchanged if no valid frontmatter is found.
+ */
+export function stripFrontmatter(content: string): string {
+  return content.replace(FRONTMATTER_RE, "");
+}
+
 /**
  * Detect the diagram type from the content of a .mmd file.
- * Skips comment lines (starting with %%) and empty lines.
+ * Skips comment lines (starting with %%), empty lines, and YAML frontmatter.
  */
 export function detectDiagramType(content: string): DiagramType {
   const lines = content.split("\n");
+  let inFrontmatter = false;
   for (const line of lines) {
     const trimmed = line.trim();
     if (trimmed === "" || trimmed.startsWith("%%")) continue;
+    if (trimmed === "---") {
+      inFrontmatter = !inFrontmatter;
+      continue;
+    }
+    if (inFrontmatter) continue;
     for (const [pattern, type] of DIAGRAM_PATTERNS) {
       if (pattern.test(trimmed)) return type;
     }

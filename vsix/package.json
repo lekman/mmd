@@ -2,7 +2,7 @@
   "name": "mmd",
   "displayName": "Mermaid Diagram Manager",
   "description": "Convert and sync Mermaid diagrams to self-styled SVGs in Markdown",
-  "version": "1.3.1",
+  "version": "1.3.2",
   "publisher": "lekman",
   "license": "MIT",
   "repository": {
