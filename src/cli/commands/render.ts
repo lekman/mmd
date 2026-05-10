@@ -1,12 +1,6 @@
 import { Command } from "commander";
 import { renderDiagrams } from "../../services/render.ts";
-import {
-  CONFIG_PATH,
-  createFallbackRenderer,
-  createFs,
-  createRenderer,
-  loadConfig,
-} from "../shared.ts";
+import { CONFIG_PATH, createFs, createRenderer, loadConfig } from "../shared.ts";
 
 export const renderCommand = new Command("render")
   .description("Render stale docs/mmd/*.mmd to *.svg")
@@ -26,8 +20,7 @@ export const renderCommand = new Command("render")
     }
 
     const results = await renderDiagrams(config, {
-      renderer: createRenderer(),
-      fallbackRenderer: createFallbackRenderer(config.renderWidth),
+      renderer: createRenderer(config.renderWidth),
       fs,
       mmdFiles: fullPaths,
       force: options.force,

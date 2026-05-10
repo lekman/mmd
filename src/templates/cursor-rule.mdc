@@ -25,10 +25,10 @@ alwaysApply: false
 - Config: `.mermaid.json` at repo root defines theme mode, themes, output directory, and SVG styling
 - Anchors: `<!-- mmd:name -->` HTML comments link Markdown locations to diagrams
 - Multi-location: the same anchor name can appear in multiple `.md` files (shared diagram)
-- SVGs are self-styled with white background, rounded corners, and border — no `<div>` wrappers needed
+- SVGs match mermaid.live output; optional framing (background, border, rounded corners) via `.mermaid.json` `svgStyle`
 - Render uses mtime comparison: `.mmd` and `.mermaid.json` are checked; SVGs re-rendered when stale
-- Primary renderer: beautiful-mermaid (flowchart, state)
-- Fallback renderer: mmdc (sequence, class, ER, C4, gantt, pie, gitgraph, mindmap, timeline, quadrant, kanban, requirement, architecture)
+- Renderer: `@mermaid-js/mermaid-cli` (mmdc) — Puppeteer-driven Chromium running canonical `mermaid`
+- Author frontmatter (`---config: theme: dark---` at the top of a `.mmd` file) wins over the workspace theme
 
 ## Syntax Best Practices
 

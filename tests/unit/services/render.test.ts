@@ -16,8 +16,6 @@ const config: ThemeConfig = {
       themeVariables: { background: "#0d1117", primaryColor: "#1f3a5f" },
     },
   },
-  renderer: "beautiful-mermaid",
-  fallbackRenderer: "mmdc",
 };
 
 describe("prependThemeInit", () => {
@@ -44,18 +42,13 @@ describe("renderDiagrams", () => {
 
     const results = await renderDiagrams(config, {
       renderer,
-      fallbackRenderer: renderer,
       fs,
       mmdFiles: ["docs/mmd/test.mmd"],
     });
 
     expect(results).toHaveLength(1);
     expect(results[0]!.svgPath).toBe("docs/mmd/test.svg");
-
-    // Single SVG written
     expect(await fs.exists("docs/mmd/test.svg")).toBe(true);
-
-    // Renderer called once (not twice)
     expect(renderer.renderCalls).toHaveLength(1);
     expect(renderer.renderCalls[0]).toContain('"background":"#ffffff"');
   });
@@ -67,14 +60,12 @@ describe("renderDiagrams", () => {
 
     const renderer = new MockRenderer(["flowchart"]);
 
-    const results = await renderDiagrams(darkConfig, {
+    await renderDiagrams(darkConfig, {
       renderer,
-      fallbackRenderer: renderer,
       fs,
       mmdFiles: ["docs/mmd/test.mmd"],
     });
 
-    expect(results).toHaveLength(1);
     expect(renderer.renderCalls).toHaveLength(1);
     expect(renderer.renderCalls[0]).toContain('"background":"#0d1117"');
   });
@@ -89,7 +80,6 @@ describe("renderDiagrams", () => {
 
     const results = await renderDiagrams(config, {
       renderer,
-      fallbackRenderer: renderer,
       fs,
       mmdFiles: ["docs/mmd/test.mmd"],
     });
@@ -108,7 +98,6 @@ describe("renderDiagrams", () => {
 
     const results = await renderDiagrams(config, {
       renderer,
-      fallbackRenderer: renderer,
       fs,
       mmdFiles: ["docs/mmd/test.mmd"],
     });
@@ -128,7 +117,6 @@ describe("renderDiagrams", () => {
 
     const results = await renderDiagrams(config, {
       renderer,
-      fallbackRenderer: renderer,
       fs,
       mmdFiles: ["docs/mmd/test.mmd"],
       configPath: ".mermaid.json",
@@ -148,7 +136,6 @@ describe("renderDiagrams", () => {
 
     const results = await renderDiagrams(config, {
       renderer,
-      fallbackRenderer: renderer,
       fs,
       mmdFiles: ["docs/mmd/test.mmd"],
       force: true,
@@ -156,24 +143,6 @@ describe("renderDiagrams", () => {
 
     expect(results).toHaveLength(1);
     expect(renderer.renderCalls).toHaveLength(1);
-  });
-
-  test("uses fallback renderer for unsupported diagram types", async () => {
-    const fs = new MockFileSystem();
-    fs.setFile("docs/mmd/c4.mmd", 'C4Context\n  Person(user, "User")');
-
-    const primary = new MockRenderer(["flowchart"]);
-    const fallback = new MockRenderer(["c4"]);
-
-    await renderDiagrams(config, {
-      renderer: primary,
-      fallbackRenderer: fallback,
-      fs,
-      mmdFiles: ["docs/mmd/c4.mmd"],
-    });
-
-    expect(primary.renderCalls).toHaveLength(0);
-    expect(fallback.renderCalls).toHaveLength(1);
   });
 
   test("renders when SVG does not exist yet", async () => {
@@ -184,7 +153,6 @@ describe("renderDiagrams", () => {
 
     const results = await renderDiagrams(config, {
       renderer,
-      fallbackRenderer: renderer,
       fs,
       mmdFiles: ["docs/mmd/new.mmd"],
     });
@@ -192,7 +160,7 @@ describe("renderDiagrams", () => {
     expect(results).toHaveLength(1);
   });
 
-  test("applies SVG post-processing with background and border", async () => {
+  test("applies SVG post-processing when svgStyle is configured", async () => {
     const styledConfig: ThemeConfig = {
       ...config,
       svgStyle: { background: "#ffffff", borderColor: "#cccccc", borderRadius: 10, padding: 20 },
@@ -204,7 +172,6 @@ describe("renderDiagrams", () => {
 
     await renderDiagrams(styledConfig, {
       renderer,
-      fallbackRenderer: renderer,
       fs,
       mmdFiles: ["docs/mmd/test.mmd"],
     });
@@ -216,33 +183,64 @@ describe("renderDiagrams", () => {
     expect(svg).toContain('viewBox="-20 -20 240 140"');
   });
 
-  test("strips frontmatter before rendering", async () => {
+  test("skips SVG post-processing when svgStyle is undefined", async () => {
     const fs = new MockFileSystem();
-    fs.setFile(
-      "docs/mmd/infra.mmd",
-      "---\nconfig:\n  theme: neutral\n---\nC4Deployment\n  title System"
-    );
+    fs.setFile("docs/mmd/test.mmd", "flowchart TD\n  A --> B");
 
-    const primary = new MockRenderer(["flowchart"]);
-    const fallback = new MockRenderer(["c4"]);
+    const renderer = new MockRenderer(["flowchart"]);
 
     await renderDiagrams(config, {
-      renderer: primary,
-      fallbackRenderer: fallback,
+      renderer,
       fs,
-      mmdFiles: ["docs/mmd/infra.mmd"],
+      mmdFiles: ["docs/mmd/test.mmd"],
     });
 
-    // Fallback renderer used for C4 (not primary)
-    expect(primary.renderCalls).toHaveLength(0);
-    expect(fallback.renderCalls).toHaveLength(1);
+    const svg = await fs.readFile("docs/mmd/test.svg");
+    // Raw mock output viewBox should be preserved untouched
+    expect(svg).toContain('viewBox="0 0 200 100"');
+    expect(svg).not.toContain('fill="#ffffff"');
+  });
 
-    // Renderer receives content without frontmatter, with %%{init:}%% prepended
-    const rendered = fallback.renderCalls[0]!;
+  test("passes author frontmatter through unchanged (workspace theme not injected)", async () => {
+    const fs = new MockFileSystem();
+    fs.setFile(
+      "docs/mmd/authored.mmd",
+      "---\nconfig:\n  theme: dark\n---\nflowchart TD\n  A --> B"
+    );
+
+    const renderer = new MockRenderer(["flowchart"]);
+
+    await renderDiagrams(config, {
+      renderer,
+      fs,
+      mmdFiles: ["docs/mmd/authored.mmd"],
+    });
+
+    expect(renderer.renderCalls).toHaveLength(1);
+    const rendered = renderer.renderCalls[0]!;
+    // Author frontmatter preserved
+    expect(rendered).toContain("---");
+    expect(rendered).toContain("theme: dark");
+    // Workspace theme not injected
+    expect(rendered).not.toContain("%%{init:");
+  });
+
+  test("injects workspace theme when no author frontmatter is present", async () => {
+    const fs = new MockFileSystem();
+    fs.setFile("docs/mmd/plain.mmd", "C4Deployment\n  title System");
+
+    const renderer = new MockRenderer(["c4"]);
+
+    await renderDiagrams(config, {
+      renderer,
+      fs,
+      mmdFiles: ["docs/mmd/plain.mmd"],
+    });
+
+    expect(renderer.renderCalls).toHaveLength(1);
+    const rendered = renderer.renderCalls[0]!;
     expect(rendered).toContain("%%{init:");
     expect(rendered).toContain("C4Deployment");
-    expect(rendered).not.toContain("---");
-    expect(rendered).not.toContain("theme: neutral");
   });
 
   test("cleans up old .light.svg and .dark.svg files", async () => {
@@ -255,7 +253,6 @@ describe("renderDiagrams", () => {
 
     await renderDiagrams(config, {
       renderer,
-      fallbackRenderer: renderer,
       fs,
       mmdFiles: ["docs/mmd/test.mmd"],
     });

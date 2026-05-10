@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import {
   type AnchorRef,
-  BEAUTIFUL_MERMAID_TYPES,
   detectDiagramType,
+  hasFrontmatter,
   isValidThemeConfig,
   type MermaidBlock,
   type RenderResult,
@@ -172,18 +172,25 @@ describe("stripFrontmatter", () => {
   });
 });
 
-describe("BEAUTIFUL_MERMAID_TYPES", () => {
-  test("includes flowchart and state", () => {
-    expect(BEAUTIFUL_MERMAID_TYPES).toContain("flowchart");
-    expect(BEAUTIFUL_MERMAID_TYPES).toContain("state");
+describe("hasFrontmatter", () => {
+  test("returns true for a basic YAML frontmatter block", () => {
+    expect(hasFrontmatter("---\nconfig:\n  theme: dark\n---\nflowchart TD")).toBe(true);
   });
 
-  test("does not include types unsupported by beautiful-mermaid v0.1.x", () => {
-    expect(BEAUTIFUL_MERMAID_TYPES).not.toContain("sequence");
-    expect(BEAUTIFUL_MERMAID_TYPES).not.toContain("class");
-    expect(BEAUTIFUL_MERMAID_TYPES).not.toContain("er");
-    expect(BEAUTIFUL_MERMAID_TYPES).not.toContain("c4");
-    expect(BEAUTIFUL_MERMAID_TYPES).not.toContain("gantt");
+  test("returns true for frontmatter with leading blank lines", () => {
+    expect(hasFrontmatter("\n\n---\ntitle: X\n---\ngantt")).toBe(true);
+  });
+
+  test("returns false when content has no frontmatter", () => {
+    expect(hasFrontmatter("flowchart TD\n  A --> B")).toBe(false);
+  });
+
+  test("returns false when --- has no closing delimiter", () => {
+    expect(hasFrontmatter("---\nconfig:\n  theme: dark\nflowchart TD")).toBe(false);
+  });
+
+  test("returns false for empty content", () => {
+    expect(hasFrontmatter("")).toBe(false);
   });
 });
 
@@ -201,8 +208,6 @@ describe("isValidThemeConfig", () => {
           themeVariables: { background: "#0d1117", primaryColor: "#1f3a5f" },
         },
       },
-      renderer: "beautiful-mermaid",
-      fallbackRenderer: "mmdc",
     };
     expect(isValidThemeConfig(config)).toBe(true);
   });

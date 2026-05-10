@@ -3,7 +3,6 @@ import * as path from "node:path";
 import * as vscode from "vscode";
 import type { ThemeConfig } from "../../src/domain/types";
 import { isValidThemeConfig } from "../../src/domain/types";
-import { BeautifulMermaidRenderer } from "./adapters/beautiful-mermaid-renderer";
 import { MmdcRenderer } from "./adapters/mmdc-renderer";
 
 const DEFAULT_CONFIG: ThemeConfig = {
@@ -41,16 +40,7 @@ const DEFAULT_CONFIG: ThemeConfig = {
       },
     },
   },
-  renderer: "beautiful-mermaid",
-  fallbackRenderer: "mmdc",
   renderWidth: 1200,
-  svgStyle: {
-    background: "#ffffff",
-    borderColor: "#cccccc",
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 20,
-  },
 };
 
 export function getConfigPath(workspaceRoot: string): string {
@@ -74,16 +64,6 @@ export function getConfig(workspaceRoot: string): ThemeConfig {
   }
 }
 
-/**
- * Create the primary renderer (beautiful-mermaid).
- */
-export function createRenderer() {
-  return new BeautifulMermaidRenderer();
-}
-
-/**
- * Create the fallback renderer (mmdc subprocess).
- */
-export function createFallbackRenderer(width?: number) {
+export function createRenderer(width?: number) {
   return new MmdcRenderer(width);
 }

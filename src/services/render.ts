@@ -1,6 +1,6 @@
 import type { IFileSystem, IRenderer } from "../domain/interfaces.ts";
 import type { RenderResult, ThemeConfig, ThemeDef } from "../domain/types.ts";
-import { BEAUTIFUL_MERMAID_TYPES, detectDiagramType, stripFrontmatter } from "../domain/types.ts";
+import { hasFrontmatter } from "../domain/types.ts";
 import { postProcessSvg } from "./svg-post-process.ts";
 
 /**
@@ -16,7 +16,6 @@ export function prependThemeInit(content: string, theme: ThemeDef): string {
 
 export interface RenderOptions {
   renderer: IRenderer;
-  fallbackRenderer: IRenderer;
   fs: IFileSystem;
   mmdFiles: string[];
   force?: boolean;
@@ -24,8 +23,25 @@ export interface RenderOptions {
   configPath?: string;
 }
 
+async function isSvgFresh(
+  fs: IFileSystem,
+  mmdPath: string,
+  svgPath: string,
+  configMtime: number
+): Promise<boolean> {
+  if (!(await fs.exists(svgPath))) return false;
+  const sourceMtime = await fs.mtime(mmdPath);
+  const svgMtime = await fs.mtime(svgPath);
+  return svgMtime >= Math.max(sourceMtime, configMtime);
+}
+
 /**
- * Render .mmd files to single-mode SVGs using the selected theme.
+ * Render .mmd files to single-mode SVGs.
+ *
+ * Author frontmatter wins: when a diagram declares its own `---config:---`
+ * block, the workspace theme is not injected. Otherwise the configured theme
+ * is prepended as a %%{init}%% directive.
+ *
  * Skips files where SVG is newer than both source and config unless force is true.
  * Cleans up old .light.svg / .dark.svg files from the dual-mode era.
  */
@@ -33,61 +49,34 @@ export async function renderDiagrams(
   config: ThemeConfig,
   options: RenderOptions
 ): Promise<RenderResult[]> {
-  const { renderer, fallbackRenderer, fs, mmdFiles, force = false, configPath } = options;
+  const { renderer, fs, mmdFiles, force = false, configPath } = options;
   const mode = config.mode ?? "light";
   const theme = config.themes[mode];
   const results: RenderResult[] = [];
 
-  // Get config mtime for staleness comparison
   let configMtime = 0;
-  if (configPath) {
-    const configExists = await fs.exists(configPath);
-    if (configExists) {
-      configMtime = await fs.mtime(configPath);
-    }
+  if (configPath && (await fs.exists(configPath))) {
+    configMtime = await fs.mtime(configPath);
   }
 
   for (const mmdPath of mmdFiles) {
     const svgPath = mmdPath.replace(/\.mmd$/, ".svg");
 
-    // Staleness check
-    if (!force) {
-      const svgExists = await fs.exists(svgPath);
-
-      if (svgExists) {
-        const sourceMtime = await fs.mtime(mmdPath);
-        const svgMtime = await fs.mtime(svgPath);
-        const newestSource = Math.max(sourceMtime, configMtime);
-
-        if (svgMtime >= newestSource) {
-          continue;
-        }
-      }
+    if (!force && (await isSvgFresh(fs, mmdPath, svgPath, configMtime))) {
+      continue;
     }
 
     const content = await fs.readFile(mmdPath);
-    const diagramType = detectDiagramType(content);
-
-    // Choose renderer based on diagram type
-    const activeRenderer = BEAUTIFUL_MERMAID_TYPES.has(diagramType) ? renderer : fallbackRenderer;
-
-    // Render single SVG with selected theme, then post-process with styling
-    const stripped = stripFrontmatter(content);
-    const themed = prependThemeInit(stripped, theme);
-    const raw = await activeRenderer.render(themed);
-    const svg = postProcessSvg(raw, config.svgStyle);
+    const themed = hasFrontmatter(content) ? content : prependThemeInit(content, theme);
+    const raw = await renderer.render(themed);
+    const svg = config.svgStyle ? postProcessSvg(raw, config.svgStyle) : raw;
     await fs.writeFile(svgPath, svg);
 
     // Clean up old dual-mode files
-    const lightPath = mmdPath.replace(/\.mmd$/, ".light.svg");
-    const darkPath = mmdPath.replace(/\.mmd$/, ".dark.svg");
-    await fs.delete(lightPath);
-    await fs.delete(darkPath);
+    await fs.delete(mmdPath.replace(/\.mmd$/, ".light.svg"));
+    await fs.delete(mmdPath.replace(/\.mmd$/, ".dark.svg"));
 
-    results.push({
-      sourcePath: mmdPath,
-      svgPath,
-    });
+    results.push({ sourcePath: mmdPath, svgPath });
   }
 
   return results;

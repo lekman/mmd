@@ -8,7 +8,6 @@ export interface SyncOptions {
   config: ThemeConfig;
   mdFiles: string[];
   renderer: IRenderer;
-  fallbackRenderer: IRenderer;
   fs: IFileSystem;
   force?: boolean;
   /** Path to .mermaid.json for config mtime staleness. */
@@ -24,7 +23,7 @@ export interface SyncResult {
  * Run the full pipeline: extract → render → inject.
  */
 export async function sync(options: SyncOptions): Promise<SyncResult> {
-  const { config, mdFiles, renderer, fallbackRenderer, fs, force, configPath } = options;
+  const { config, mdFiles, renderer, fs, force, configPath } = options;
   const outputDir = config.outputDir ?? "docs/mmd";
   let totalExtracted = 0;
   const mmdFiles: string[] = [];
@@ -53,7 +52,6 @@ export async function sync(options: SyncOptions): Promise<SyncResult> {
   // Phase 2: Render .mmd files to SVGs
   const renderResults = await renderDiagrams(config, {
     renderer,
-    fallbackRenderer,
     fs,
     mmdFiles,
     force,

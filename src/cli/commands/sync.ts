@@ -1,12 +1,6 @@
 import { Command } from "commander";
 import { sync } from "../../services/sync.ts";
-import {
-  CONFIG_PATH,
-  createFallbackRenderer,
-  createFs,
-  createRenderer,
-  loadConfig,
-} from "../shared.ts";
+import { CONFIG_PATH, createFs, createRenderer, loadConfig } from "../shared.ts";
 
 export const syncCommand = new Command("sync")
   .description("Run extract + render + inject in sequence")
@@ -26,8 +20,7 @@ export const syncCommand = new Command("sync")
     const result = await sync({
       config,
       mdFiles,
-      renderer: createRenderer(),
-      fallbackRenderer: createFallbackRenderer(config.renderWidth),
+      renderer: createRenderer(config.renderWidth),
       fs,
       force: options.force,
       configPath: CONFIG_PATH,

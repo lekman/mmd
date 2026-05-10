@@ -3,7 +3,7 @@ import * as vscode from "vscode";
 import { injectImageTags } from "../../src/services/inject";
 import { renderDiagrams } from "../../src/services/render";
 import { VsCodeFileSystem } from "./adapters/vscode-fs";
-import { getConfig, getConfigPath, getOutputDir, createRenderer, createFallbackRenderer } from "./shared";
+import { getConfig, getConfigPath, getOutputDir, createRenderer } from "./shared";
 
 const inFlightSaves = new Set<string>();
 
@@ -48,8 +48,7 @@ export async function onDidSave(document: vscode.TextDocument): Promise<void> {
     // Re-render this specific diagram
     const mmdConfig = getConfig(root);
     await renderDiagrams(mmdConfig, {
-      renderer: createRenderer(),
-      fallbackRenderer: createFallbackRenderer(mmdConfig.renderWidth),
+      renderer: createRenderer(mmdConfig.renderWidth),
       fs,
       mmdFiles: [relativePath],
       force: true,
@@ -62,8 +61,7 @@ export async function onDidSave(document: vscode.TextDocument): Promise<void> {
     const mmdFiles = await fs.glob(`${outputDir}/**/*.mmd`, root);
     if (mmdFiles.length > 0) {
       await renderDiagrams(mmdConfig, {
-        renderer: createRenderer(),
-        fallbackRenderer: createFallbackRenderer(mmdConfig.renderWidth),
+        renderer: createRenderer(mmdConfig.renderWidth),
         fs,
         mmdFiles,
         force: true,

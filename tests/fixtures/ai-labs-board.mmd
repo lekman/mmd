@@ -1,0 +1,51 @@
+---
+config:
+  theme: dark
+---
+flowchart TD
+    subgraph lab ["AI Labs Board"]
+        cto["<b>Tobias Lekman</b><br/>CTO"]
+        hope["<b>Head of Product Engineering</b><br/>Orchestration, planning, delegation<br/><i>Opus</i>"]
+    end
+
+    subgraph team ["AI Labs Engineering Team"]
+        ce["<b>Content Engineer</b><br/>Accelerators, marketing, docs<br/><i>Sonnet</i>"]
+        swe["<b>Software Engineer</b><br/>Products, tooling, development, migrations<br/><i>Sonnet</i>"]
+        sec["<b>Security Engineer</b><br/>Vuln triage, SAST/DAST, monitoring<br/><i>Sonnet</i>"]
+        pqm["<b>Principal Quality Manager</b><br/>QA, deliverable review, testing<br/><i>Sonnet</i>"]
+        pca["<b>Principal Cloud Architect</b><br/>Infrastructure, deployment, cost<br/><i>Sonnet</i>"]
+    end
+
+    cto -- "Approves: releases,<br/>core PRs, deployments" --> hope
+    hope -- "Approve" --> ce & swe & sec & pqm & pca
+
+    subgraph outputs [" Output "]
+        direction LR
+        ic["<b>Intellectual Capital</b>"]
+        pt["<b>Products and Tools</b>"]
+    end
+
+    ce -.-> ic
+    swe -.-> pt
+    sec -.-> pt
+    pqm -.-> ic & pt
+    pca -.-> pt
+
+    classDef cto fill:#eeedfe,stroke:#534ab7,color:#3c3489
+    classDef lead fill:#e1f5ee,stroke:#0f6e56,color:#085041
+    classDef content fill:#faece7,stroke:#993c1d,color:#712b13
+    classDef eng fill:#e6f1fb,stroke:#185fa5,color:#0c447c
+    classDef sec fill:#fff3cd,stroke:#856404,color:#533f03
+    classDef qa fill:#f0e6fb,stroke:#6f42c1,color:#4a2d82
+    classDef arch fill:#e6f7f1,stroke:#1a7a5c,color:#0d5a42
+    classDef output fill:#f1efe8,stroke:#5f5e5a,color:#2c2c2a
+
+    class board board
+    class cto cto
+    class hope lead
+    class ce content
+    class swe eng
+    class sec sec
+    class pqm qa
+    class pca arch
+    class ic,pt output

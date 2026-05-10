@@ -21,8 +21,7 @@ const config: ThemeConfig = {
 function createDeps(fs: MockFileSystem) {
   return {
     config,
-    renderer: new MockRenderer(["flowchart"]),
-    fallbackRenderer: new MockRenderer(["c4", "sequence"]),
+    renderer: new MockRenderer(["flowchart", "sequence", "c4"]),
     fs,
   };
 }

@@ -23,7 +23,6 @@ describe("sync", () => {
       config,
       mdFiles: ["README.md"],
       renderer,
-      fallbackRenderer: renderer,
       fs,
     });
 
@@ -54,7 +53,6 @@ describe("sync", () => {
       config,
       mdFiles: ["README.md"],
       renderer,
-      fallbackRenderer: renderer,
       fs,
     });
 

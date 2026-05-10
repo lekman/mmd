@@ -1,12 +1,6 @@
 import { Command } from "commander";
 import { convertBlocks } from "../../services/convert.ts";
-import {
-  CONFIG_PATH,
-  createFallbackRenderer,
-  createFs,
-  createRenderer,
-  loadConfig,
-} from "../shared.ts";
+import { CONFIG_PATH, createFs, createRenderer, loadConfig } from "../shared.ts";
 
 export const convertCommand = new Command("convert")
   .description("Convert mermaid fenced blocks to SVG references")
@@ -19,8 +13,7 @@ export const convertCommand = new Command("convert")
     const result = await convertBlocks({
       config,
       mdFile: file,
-      renderer: createRenderer(),
-      fallbackRenderer: createFallbackRenderer(config.renderWidth),
+      renderer: createRenderer(config.renderWidth),
       fs,
       blockIndex: (() => {
         if (options.block === undefined) return undefined;

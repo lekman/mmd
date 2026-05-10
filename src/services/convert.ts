@@ -8,7 +8,6 @@ export interface ConvertOptions {
   config: ThemeConfig;
   mdFile: string;
   renderer: IRenderer;
-  fallbackRenderer: IRenderer;
   fs: IFileSystem;
   /** Convert only the block at this index (0-based). Omit to convert all blocks. */
   blockIndex?: number;
@@ -27,7 +26,7 @@ export interface ConvertResult {
  * Skips writing .mmd files that already exist (multi-location anchor support).
  */
 export async function convertBlocks(options: ConvertOptions): Promise<ConvertResult> {
-  const { config, mdFile, renderer, fallbackRenderer, fs, blockIndex, configPath } = options;
+  const { config, mdFile, renderer, fs, blockIndex, configPath } = options;
   const outputDir = config.outputDir ?? "docs/mmd";
 
   const content = await fs.readFile(mdFile);
@@ -60,7 +59,6 @@ export async function convertBlocks(options: ConvertOptions): Promise<ConvertRes
   // Phase 3: Render .mmd files to SVGs
   const renderResults = await renderDiagrams(config, {
     renderer,
-    fallbackRenderer,
     fs,
     mmdFiles,
     force: true,

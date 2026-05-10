@@ -20,15 +20,6 @@ export type DiagramType =
   | "architecture"
   | "unknown";
 
-/**
- * Diagram types supported by the beautiful-mermaid renderer (v0.1.x).
- * All other types fall back to mmdc.
- */
-export const BEAUTIFUL_MERMAID_TYPES: ReadonlySet<DiagramType> = new Set<DiagramType>([
-  "flowchart",
-  "state",
-]);
-
 /** An extracted fenced Mermaid block from a Markdown file. */
 export interface MermaidBlock {
   content: string;
@@ -65,8 +56,7 @@ export interface ThemeConfig {
     light: ThemeDef;
     dark: ThemeDef;
   };
-  renderer?: string;
-  fallbackRenderer?: string;
+  /** Optional SVG framing (background, border, rounded corners). Omit for raw mermaid output. */
   svgStyle?: SvgStyleOptions;
   /** Puppeteer viewport width for mmdc rendering (default: 1200). */
   renderWidth?: number;
@@ -116,6 +106,15 @@ const FRONTMATTER_RE = /^\s*---\r?\n[\s\S]*?\n---[^\S\n]*\r?\n?/;
  */
 export function stripFrontmatter(content: string): string {
   return content.replace(FRONTMATTER_RE, "");
+}
+
+/**
+ * Return true when content begins with a Mermaid YAML frontmatter block.
+ * Used by the render pipeline to skip workspace theme injection when the
+ * diagram author has already declared their own configuration.
+ */
+export function hasFrontmatter(content: string): boolean {
+  return FRONTMATTER_RE.test(content);
 }
 
 /**

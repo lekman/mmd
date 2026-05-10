@@ -1,6 +1,5 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
-import { BeautifulMermaidRenderer } from "../adapters/beautiful-mermaid-renderer.system.ts";
 import { NodeFileSystem } from "../adapters/filesystem.system.ts";
 import { MmdcRenderer } from "../adapters/mmdc-renderer.system.ts";
 import type { ThemeConfig } from "../domain/types.ts";
@@ -41,16 +40,7 @@ export const DEFAULT_CONFIG: ThemeConfig = {
       },
     },
   },
-  renderer: "beautiful-mermaid",
-  fallbackRenderer: "mmdc",
   renderWidth: 1200,
-  svgStyle: {
-    background: "#ffffff",
-    borderColor: "#cccccc",
-    borderWidth: 1,
-    borderRadius: 10,
-    padding: 20,
-  },
 };
 
 export const CONFIG_PATH = resolve(process.cwd(), ".mermaid.json");
@@ -72,10 +62,6 @@ export function createFs() {
   return new NodeFileSystem();
 }
 
-export function createRenderer() {
-  return new BeautifulMermaidRenderer();
-}
-
-export function createFallbackRenderer(width?: number) {
+export function createRenderer(width?: number) {
   return new MmdcRenderer(width);
 }

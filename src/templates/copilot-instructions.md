@@ -19,9 +19,9 @@ applyTo: "**/*.mmd,**/*.md,docs/**"
 - `mmd config` — write default `.mermaid.json`
 - Config: `.mermaid.json` at repo root (mode, themes, output dir, SVG styling)
 - Anchors: `<!-- mmd:name -->` comments link Markdown to diagrams (multi-location supported)
-- SVGs are self-styled with background, border, and rounded corners — no `<div>` wrappers needed
+- SVGs match mermaid.live output; optional framing (background, border, rounded corners) via `.mermaid.json` `svgStyle`
 - Render skips up-to-date files (mtime comparison); use `--force` to override
-- Renderers: beautiful-mermaid (flowchart, state), mmdc fallback (all other types)
+- Renderer: `@mermaid-js/mermaid-cli` (mmdc) — canonical mermaid via Puppeteer; author frontmatter wins over workspace theme
 
 ## Syntax Best Practices
 

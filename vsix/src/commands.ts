@@ -4,7 +4,7 @@ import { extractMermaidBlocks } from "../../src/services/extract";
 import { convertBlocks } from "../../src/services/convert";
 import { renderDiagrams } from "../../src/services/render";
 import { sync } from "../../src/services/sync";
-import { getConfig, getConfigPath, getOutputDir, createRenderer, createFallbackRenderer } from "./shared";
+import { getConfig, getConfigPath, getOutputDir, createRenderer } from "./shared";
 import { VsCodeFileSystem } from "./adapters/vscode-fs";
 
 function getWorkspaceRoot(): string {
@@ -34,8 +34,7 @@ export async function convertAll(): Promise<void> {
   const result = await convertBlocks({
     config: getConfig(root),
     mdFile: relativePath,
-    renderer: createRenderer(),
-    fallbackRenderer: createFallbackRenderer(getConfig(root).renderWidth),
+    renderer: createRenderer(getConfig(root).renderWidth),
     fs,
     configPath: getConfigPath(root),
   });
@@ -71,8 +70,7 @@ export async function convertAtLine(uri: vscode.Uri, line: number): Promise<void
   const result = await convertBlocks({
     config: getConfig(root),
     mdFile: relativePath,
-    renderer: createRenderer(),
-    fallbackRenderer: createFallbackRenderer(getConfig(root).renderWidth),
+    renderer: createRenderer(getConfig(root).renderWidth),
     fs,
     blockIndex,
     configPath: getConfigPath(root),
@@ -95,8 +93,7 @@ export async function syncAll(): Promise<void> {
   const result = await sync({
     config: getConfig(root),
     mdFiles,
-    renderer: createRenderer(),
-    fallbackRenderer: createFallbackRenderer(getConfig(root).renderWidth),
+    renderer: createRenderer(getConfig(root).renderWidth),
     fs,
     configPath: getConfigPath(root),
   });
@@ -138,8 +135,7 @@ export async function rerender(name: string): Promise<void> {
   }
 
   const results = await renderDiagrams(getConfig(root), {
-    renderer: createRenderer(),
-    fallbackRenderer: createFallbackRenderer(getConfig(root).renderWidth),
+    renderer: createRenderer(getConfig(root).renderWidth),
     fs,
     mmdFiles: [mmdPath],
     force: true,
