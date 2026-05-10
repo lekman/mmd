@@ -117,3 +117,4 @@ Install mmdc for non-flowchart/state diagrams: `npm install -g @mermaid-js/merma
 ## License
 
 [MIT](LICENSE)
+
