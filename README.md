@@ -1,10 +1,10 @@
 # Mermaid Diagram Management
 
-[![VS Code Marketplace](https://img.shields.io/visual-studio-marketplace/v/lekman.mmd?label=VS%20Code%20Marketplace)](https://marketplace.visualstudio.com/items?itemName=lekman.mmd)
+[![VS Code Marketplace](https://img.shields.io/badge/VS%20Code%20Marketplace-lekman.mmd-blue)](https://marketplace.visualstudio.com/items?itemName=lekman.mmd)
 [![npm version](https://img.shields.io/npm/v/@lekman/mmd)](https://www.npmjs.com/package/@lekman/mmd)
 [![codecov](https://codecov.io/gh/lekman/mmd/graph/badge.svg?token=Q9JrvN8z9A)](https://codecov.io/gh/lekman/mmd)
 
-Extract, render, and inject themed SVGs into Markdown. Diagrams render correctly on GitHub, VS Code, Confluence, and Word exports — no `<div>` wrappers needed.
+Extract, render, and inject themed SVGs into Markdown. Output matches the Mermaid Live Editor; optional framing (background, border, rounded corners) bakes the styling into the SVG so diagrams render correctly on GitHub, VS Code, Confluence, and Word exports.
 
 <a href="docs/mmd/architecture-1.svg"><img src="docs/mmd/architecture-1.svg" alt="Rendered SVG preview" width="400"></a>
 
@@ -87,21 +87,18 @@ Run `mmd config` to generate a full config with light and dark themes matching G
 | Field | Description |
 | ----- | ----------- |
 | `outputDir` | Directory for `.mmd` and `.svg` files |
-| `mode` | `"light"` or `"dark"` theme selection |
+| `mode` | `"light"` or `"dark"` theme selection (used when a diagram has no author frontmatter) |
 | `renderWidth` | Puppeteer viewport width for mmdc (default: 1200) |
-| `svgStyle` | Background, border, corner radius, padding baked into SVGs |
+| `svgStyle` | Optional. Background, border, corner radius, padding baked into SVGs. Omit for raw Mermaid output. |
 | `themes` | Light and dark Mermaid theme variables |
-| `renderer` | Primary renderer (`beautiful-mermaid`) |
-| `fallbackRenderer` | Fallback for unsupported types (`mmdc`) |
 
-## Renderer Support
+Author frontmatter wins: if a `.mmd` file starts with `---\nconfig:\n  theme: dark\n---`, the workspace theme is not injected. The diagram renders exactly as it would in the Mermaid Live Editor.
 
-| Renderer | Diagram Types |
-| -------- | ------------- |
-| beautiful-mermaid | flowchart, state |
-| mmdc (fallback) | sequence, class, ER, C4, gantt, pie, gitgraph, mindmap, timeline, quadrant, kanban, requirement, architecture |
+## Renderer
 
-Install mmdc for non-flowchart/state diagrams: `npm install -g @mermaid-js/mermaid-cli`
+Uses [`@mermaid-js/mermaid-cli`](https://github.com/mermaid-js/mermaid-cli) (mmdc) — a Puppeteer-driven headless Chromium running the canonical `mermaid` library. Output matches `mermaid.live` for all 15 supported diagram types (flowchart, sequence, class, state, ER, C4, gantt, pie, gitgraph, mindmap, timeline, quadrant, kanban, requirement, architecture).
+
+The first render downloads Puppeteer's bundled Chromium (one-time per machine).
 
 ## Documentation
 
