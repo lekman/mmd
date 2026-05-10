@@ -5,36 +5,36 @@
 requirementDiagram
 
     requirement businessNeed {
-        id: BR-001
-        text: Users must be able to reset their password securely
+        id: "BR-001"
+        text: "Users must be able to reset their password securely"
         risk: high
         verifymethod: inspection
     }
 
     functionalRequirement resetFlow {
-        id: FR-001
-        text: System sends a time-limited reset link via email
+        id: "FR-001"
+        text: "System sends a time-limited reset link via email"
         risk: medium
         verifymethod: demonstration
     }
 
     functionalRequirement tokenExpiry {
-        id: FR-002
-        text: Reset tokens expire after 15 minutes
+        id: "FR-002"
+        text: "Reset tokens expire after 15 minutes"
         risk: medium
         verifymethod: test
     }
 
     performanceRequirement emailDelivery {
-        id: NFR-001
-        text: Reset email delivered within 30 seconds
+        id: "NFR-001"
+        text: "Reset email delivered within 30 seconds"
         risk: low
         verifymethod: test
     }
 
     designConstraint hashAlgorithm {
-        id: DC-001
-        text: Passwords hashed with bcrypt cost factor 12
+        id: "DC-001"
+        text: "Passwords hashed with bcrypt cost factor 12"
         risk: medium
         verifymethod: inspection
     }

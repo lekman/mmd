@@ -23,12 +23,11 @@ sequenceDiagram
     alt Valid credentials
         Auth->>Auth: Generate JWT token
         Auth-->>App: 200 OK + JWT
-        deactivate Auth
         App-->>User: Redirect to dashboard
     else Invalid credentials
         Auth-->>App: 401 Unauthorized
-        deactivate Auth
         App-->>User: Show error message
     end
+    deactivate Auth
 
     deactivate App
