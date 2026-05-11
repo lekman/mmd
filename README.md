@@ -114,3 +114,4 @@ The first render downloads Puppeteer's bundled Chromium (one-time per machine).
 ## License
 
 [MIT](LICENSE)
+
