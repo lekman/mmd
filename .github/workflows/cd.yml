@@ -45,6 +45,13 @@ jobs:
           node-version: 22
           registry-url: "https://registry.npmjs.org"
 
+      - name: Upgrade npm for Trusted Publishing
+        # Trusted Publishing was added in npm 11.5.1. Node 22 ships with
+        # npm 10.x, which can sign provenance but cannot authenticate the
+        # publish itself via OIDC — the registry then rejects with an
+        # opacity 404. Pin npm to the latest release to enable OIDC auth.
+        run: npm install -g npm@latest
+
       - name: Install dependencies
         run: bun install
 
