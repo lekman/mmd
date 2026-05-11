@@ -37,6 +37,7 @@ Thumbs.db
 
 # Local development files
 *.local.*
+.npmrc
 
 # Lock files (bun uses bun.lock)
 package-lock.json

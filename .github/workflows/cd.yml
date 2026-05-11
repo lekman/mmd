@@ -1,4 +1,4 @@
-# Publish to npm, GitHub Packages, and VS Code Marketplace when a release is published.
+# Publish to npm and VS Code Marketplace when a release is published.
 # Triggered by release-please creating a GitHub release, or manually via workflow_dispatch.
 #
 # npm publishing uses Trusted Publishing (OIDC) — no long-lived token. Configured at
@@ -106,45 +106,3 @@ jobs:
             fi
           }
 
-  publish-gpr:
-    name: Publish to GitHub Packages
-    runs-on: ubuntu-latest
-    permissions:
-      contents: read    # checkout the release tag
-      packages: write   # publish to GitHub Packages
-    steps:
-      - name: Checkout
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6
-        with:
-          ref: ${{ inputs.tag || github.event.release.tag_name }}
-
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2
-        with:
-          bun-version: latest
-
-      - name: Setup Node
-        uses: actions/setup-node@53b83947a5a98c8d113130e565377fae1a50d02f # v6
-        with:
-          node-version: 22
-          registry-url: "https://npm.pkg.github.com"
-          scope: "@lekman"
-
-      - name: Install dependencies
-        run: bun install
-
-      - name: Build
-        run: bun run build
-
-      - name: Publish to GitHub Packages
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          npm publish --access public 2>&1 | tee publish.log || {
-            if grep -qE "(already exists|EPUBLISHCONFLICT|cannot publish over)" publish.log; then
-              echo "::notice::Version already exists on GitHub Packages, skipping"
-            else
-              cat publish.log
-              exit 1
-            fi
-          }
