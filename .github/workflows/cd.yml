@@ -93,9 +93,18 @@ jobs:
         run: cd vsix && bun esbuild.mjs --minify
 
       - name: Package and publish
-        run: cd vsix && npx @vscode/vsce publish --no-dependencies -p "$VSCE_PAT"
         env:
           VSCE_PAT: ${{ secrets.VSCE_PAT }}
+        run: |
+          cd vsix
+          npx @vscode/vsce publish --no-dependencies -p "$VSCE_PAT" 2>&1 | tee publish.log || {
+            if grep -qiE "already exists" publish.log; then
+              echo "::notice::Version already exists on VS Code Marketplace, skipping"
+            else
+              cat publish.log
+              exit 1
+            fi
+          }
 
   publish-gpr:
     name: Publish to GitHub Packages
