@@ -1,5 +1,22 @@
 # Changelog
 
+## [1.4.0](https://github.com/lekman/mmd/compare/mmd-v1.3.2...mmd-v1.4.0) (2026-05-11)
+
+
+### Features
+
+* **render:** use mmdc as sole renderer for canonical mermaid output ([dad653d](https://github.com/lekman/mmd/commit/dad653d4922ee863739088342ace910a5e8f0d62))
+
+
+### Bug Fixes
+
+* **examples:** correct mermaid syntax in sequence and requirement examples ([845077d](https://github.com/lekman/mmd/commit/845077d3f3274a9b2d7dcbceecd75a52cc4e3519))
+
+
+### Documentation
+
+* **readme:** refresh renderer section and replace dynamic VS Marketplace badge ([058c607](https://github.com/lekman/mmd/commit/058c6070b77ca6b53a1c11c07ed220bd3cf0a560))
+
 ## [1.3.2](https://github.com/lekman/mmd/compare/mmd-v1.3.1...mmd-v1.3.2) (2026-04-06)
 
 
