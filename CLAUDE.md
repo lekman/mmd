@@ -29,12 +29,19 @@ bun test tests/unit/services/extract.test.ts
 
 Pre-commit hooks run `lint` and `typecheck` automatically.
 
-Additional task commands via `@northbridge-security/ai-toolkit`:
+Additional task commands are **currently unavailable**. They came from
+`@northbridge-security/ai-toolkit`, which has been unpublished from npm, so the
+includes in `Taskfile.yml` are commented out and the dependency is removed. They
+return when `@lekman/devops-toolkit` ships the shared taskfiles:
+
 - `task git:<command>` — Git operations
 - `task json:<command>` — JSON validation
 - `task yaml:<command>` — YAML validation
 - `task markdown:<command>` — Markdown validation
 - `task security:<command>` — Security tools (Semgrep)
+- `task op:<command>` — 1Password
+
+Everything else in `Taskfile.yml` still works, and CI never used these.
 
 ## Architecture Rules
 

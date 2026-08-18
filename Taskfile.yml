@@ -2,31 +2,48 @@
 
 version: "3"
 
-includes:
-  git:
-    taskfile: ./node_modules/@northbridge-security/ai-toolkit/tasks/git.yml
-    dir: .
-  json:
-    taskfile: ./node_modules/@northbridge-security/ai-toolkit/tasks/json.yml
-    dir: .
-  yaml:
-    taskfile: ./node_modules/@northbridge-security/ai-toolkit/tasks/yaml.yml
-    aliases:
-      - yml
-    dir: .
-  markdown:
-    taskfile: ./node_modules/@northbridge-security/ai-toolkit/tasks/markdown.yml
-    aliases:
-      - md
-    dir: .
-  security:
-    taskfile: ./node_modules/@northbridge-security/ai-toolkit/tasks/security.yml
-    aliases:
-      - s
-    dir: .
-  op:
-    taskfile: ./node_modules/@northbridge-security/ai-toolkit/tasks/onepassword.yml
-    dir: .
+# The six shared taskfiles below are disabled, not deleted.
+#
+# They were read from node_modules/@northbridge-security/ai-toolkit, a package
+# that has been unpublished from npm. It went when the repos moved from the
+# Northbridge organisation to lekman and the packages were renamed; nothing
+# now publishes that name, so `bun install` could not resolve it and every CI
+# job died at install before a single test ran.
+#
+# Removing the dependency is what makes CI work again. CI never invoked `task`,
+# so nothing in the pipeline depended on these includes -- only local
+# convenience commands (`task git:*`, `task md:*`, `task s:*` and so on), which
+# are unavailable until the replacement package is published.
+#
+# The taskfiles themselves are not lost: they survive at their original paths
+# in the archived northbridge-security/secure-ai repository. Re-enable this
+# block, with the new scope and paths, once @lekman/devops-toolkit ships them.
+#
+# includes:
+#   git:
+#     taskfile: ./node_modules/@lekman/devops-toolkit/tasks/git.yml
+#     dir: .
+#   json:
+#     taskfile: ./node_modules/@lekman/devops-toolkit/tasks/json.yml
+#     dir: .
+#   yaml:
+#     taskfile: ./node_modules/@lekman/devops-toolkit/tasks/yaml.yml
+#     aliases:
+#       - yml
+#     dir: .
+#   markdown:
+#     taskfile: ./node_modules/@lekman/devops-toolkit/tasks/markdown.yml
+#     aliases:
+#       - md
+#     dir: .
+#   security:
+#     taskfile: ./node_modules/@lekman/devops-toolkit/tasks/security.yml
+#     aliases:
+#       - s
+#     dir: .
+#   op:
+#     taskfile: ./node_modules/@lekman/devops-toolkit/tasks/onepassword.yml
+#     dir: .
 
 vars:
   PROJECT_NAME: "mmd"
